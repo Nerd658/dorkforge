@@ -96,3 +96,32 @@ func TestBuildScanSummary(t *testing.T) {
 		t.Errorf("unexpected rendered query: %s", summary.Results[0].RenderedQuery)
 	}
 }
+
+func TestCIDRAndASNTarget(t *testing.T) {
+	if !IsCIDR("198.51.100.0/24") || !IsCIDR("192.168.1.1") {
+		t.Errorf("expected CIDR identification to succeed")
+	}
+	if !IsASN("AS15169") || !IsASN("as1234") {
+		t.Errorf("expected ASN identification to succeed")
+	}
+
+	sanitizedCIDR := SanitizeTarget("198.51.100.0/24")
+	if sanitizedCIDR != "198.51.100.0/24" {
+		t.Errorf("expected 198.51.100.0/24, got %s", sanitizedCIDR)
+	}
+
+	sanitizedASN := SanitizeTarget("AS15169")
+	if sanitizedASN != "as15169" && sanitizedASN != "AS15169" {
+		t.Errorf("unexpected sanitized ASN: %s", sanitizedASN)
+	}
+
+	renderedCIDR := RenderQueryFast("ssl.cert.subject.CN:\"{{TARGET}}\"", "198.51.100.0/24", "")
+	if renderedCIDR != "net:\"198.51.100.0/24\"" {
+		t.Errorf("expected net:\"198.51.100.0/24\", got %s", renderedCIDR)
+	}
+
+	renderedASN := RenderQueryFast("ssl.cert.subject.CN:\"{{TARGET}}\"", "AS15169", "")
+	if renderedASN != "asn:\"AS15169\"" {
+		t.Errorf("expected asn:\"AS15169\", got %s", renderedASN)
+	}
+}

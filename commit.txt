@@ -1,23 +1,26 @@
-[2026-08-19] — Implement Optional Shodan and GitHub REST API Direct Intelligence Clients
+[2026-08-19] — Implement .dfgignore, Report Diffing, Google CSE API, and CIDR/ASN Targets
 
 What changed:
-- Created 'internal/api/shodan.go' implementing Shodan REST API host search client (extracts IPs, ports, hostnames, orgs, location).
-- Created 'internal/api/github.go' implementing GitHub Code Search REST API client (extracts file paths, repos, code links).
-- Created 'internal/api/api_test.go' with 100% passing mock HTTP unit test coverage.
-- Integrated optional API execution into 'internal/recon/recon.go' and added 'API Intelligence' tab rendering in 'internal/recon/export.go'.
-- Added '--shodan-key' and '--github-token' CLI flags and environment variable support ('SHODAN_API_KEY', 'GITHUB_TOKEN') in 'cmd/dorkforge/main.go'.
-- Updated 'README.md' and shell completions.
+- Added 'internal/ignore' package implementing .dfgignore false-positive and URL pattern exclusion rules.
+- Added 'internal/diff' package implementing report delta calculation (--diff previous.json) to highlight new vs resolved findings.
+- Added Google Custom Search Engine (CSE) REST API client in 'internal/api/google.go' with --google-key and --google-cx options.
+- Added CIDR IP range (e.g. 198.51.100.0/24) and ASN (e.g. AS15169) target parsing and auto-adaptation in 'internal/engine/builder.go'.
+- Integrated all new features into 'cmd/dorkforge/main.go', 'internal/recon', and 'internal/recon/export.go'.
+- Verified 100% test pass rate across all unit test suites.
 
 Why:
-- Allow auditors with Shodan or GitHub API credentials to directly resolve IP targets and code leaks inside terminal output and HTML reports without manual browser interaction, while keeping the tool 100% functional without keys.
+- Expand passive reconnaissance, noise reduction, and continuous DevSecOps audit capabilities while staying strictly within the DorkForge passive search dorking scope.
 
 Files affected:
-- internal/api/shodan.go — Shodan REST API client
-- internal/api/github.go — GitHub Code Search REST API client
-- internal/api/api_test.go — Unit test suite for API clients
-- internal/recon/recon.go — Integrated API query execution into Recon pipeline
-- internal/recon/export.go — Added API Intelligence tab rendering in HTML dashboard
-- cmd/dorkforge/main.go — Added --shodan-key and --github-token flags and env var resolution
-- internal/completion/completion.go — Updated autocompletion scripts
-- README.md — Added API Intelligence documentation
+- internal/ignore/ignore.go — Exclusion rules engine
+- internal/ignore/ignore_test.go — Ignore rules unit tests
+- internal/diff/diff.go — Report comparison engine
+- internal/diff/diff_test.go — Diff comparison unit tests
+- internal/api/google.go — Google CSE REST API client
+- internal/api/api_test.go — Google CSE API unit tests
+- internal/engine/builder.go — Added CIDR and ASN target support
+- internal/engine/builder_test.go — Added CIDR and ASN unit tests
+- internal/recon/recon.go — Integrated ignore rules and Google CSE API execution
+- internal/recon/export.go — Rendered Google CSE results in HTML dashboard
+- cmd/dorkforge/main.go — Wired --ignore, --diff, --google-key, and --google-cx flags
 - commit.txt — Updated release notes

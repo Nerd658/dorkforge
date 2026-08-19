@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"net"
 	"net/url"
 	"strings"
 	"time"
@@ -15,6 +16,30 @@ type FilterOptions struct {
 	SearchQuery string
 }
 
+// IsCIDR checks if target string is an IP address or CIDR range.
+func IsCIDR(target string) bool {
+	norm := strings.TrimSpace(target)
+	if net.ParseIP(norm) != nil {
+		return true
+	}
+	_, _, err := net.ParseCIDR(norm)
+	return err == nil
+}
+
+// IsASN checks if target string is an Autonomous System Number (e.g. AS15169).
+func IsASN(target string) bool {
+	norm := strings.ToUpper(strings.TrimSpace(target))
+	if strings.HasPrefix(norm, "AS") && len(norm) > 2 {
+		for _, c := range norm[2:] {
+			if c < '0' || c > '9' {
+				return false
+			}
+		}
+		return true
+	}
+	return false
+}
+
 // SanitizeTarget cleans and normalizes a target domain without allocations when already clean.
 func SanitizeTarget(raw string) string {
 	target := strings.TrimSpace(raw)
@@ -24,6 +49,11 @@ func SanitizeTarget(raw string) string {
 		target = target[7:]
 	} else if strings.HasPrefix(target, "ftp://") {
 		target = target[6:]
+	}
+
+	norm := strings.TrimSpace(target)
+	if IsCIDR(norm) || IsASN(norm) {
+		return norm
 	}
 
 	if idx := strings.IndexByte(target, '/'); idx != -1 {
@@ -75,6 +105,24 @@ func RenderQueryFast(template, target, org string) string {
 		return template
 	}
 	q := template
+
+	if IsCIDR(target) {
+		if strings.Contains(q, "ssl.cert.subject.CN:\"{{TARGET}}\"") {
+			return strings.ReplaceAll(q, "ssl.cert.subject.CN:\"{{TARGET}}\"", "net:\""+target+"\"")
+		}
+		if strings.Contains(q, "site:{{TARGET}}") {
+			return strings.ReplaceAll(q, "site:{{TARGET}}", "net:\""+target+"\"")
+		}
+	} else if IsASN(target) {
+		asnUpper := strings.ToUpper(target)
+		if strings.Contains(q, "ssl.cert.subject.CN:\"{{TARGET}}\"") {
+			return strings.ReplaceAll(q, "ssl.cert.subject.CN:\"{{TARGET}}\"", "asn:\""+asnUpper+"\"")
+		}
+		if strings.Contains(q, "site:{{TARGET}}") {
+			return strings.ReplaceAll(q, "site:{{TARGET}}", "asn:\""+asnUpper+"\"")
+		}
+	}
+
 	if strings.Contains(q, "{{TARGET}}") {
 		q = strings.ReplaceAll(q, "{{TARGET}}", target)
 	}

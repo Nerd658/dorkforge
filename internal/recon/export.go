@@ -345,7 +345,7 @@ func ExportReconHTML(result *ReconResult) []byte {
 	<div class="tab" onclick="switchTab(event, 'dorks')">Dork Signatures</div>
 	<div class="tab" onclick="switchTab(event, 'live')">Live Findings</div>
 	<div class="tab" onclick="switchTab(event, 'probes')">Probe Results</div>` + func() string {
-		if len(result.ShodanMatches) > 0 || len(result.GitHubItems) > 0 {
+		if len(result.ShodanMatches) > 0 || len(result.GitHubItems) > 0 || len(result.GoogleItems) > 0 {
 			return `<div class="tab" onclick="switchTab(event, 'api-results')">API Intelligence</div>`
 		}
 		return ""
@@ -501,7 +501,7 @@ func ExportReconHTML(result *ReconResult) []byte {
 	</table>
 </div>`)
 
-	if len(result.ShodanMatches) > 0 || len(result.GitHubItems) > 0 {
+	if len(result.ShodanMatches) > 0 || len(result.GitHubItems) > 0 || len(result.GoogleItems) > 0 {
 		sb.WriteString(`
 <div id="api-results" class="tab-content">`)
 		if len(result.ShodanMatches) > 0 {
@@ -523,6 +523,15 @@ func ExportReconHTML(result *ReconResult) []byte {
 			for _, g := range result.GitHubItems {
 				sb.WriteString(fmt.Sprintf(`<tr><td><code>%s</code></td><td>%s</td><td><a href="%s" target="_blank" class="btn">View Code</a></td></tr>`,
 					html.EscapeString(g.Path), html.EscapeString(g.Repository.FullName), html.EscapeString(g.HTMLURL)))
+			}
+			sb.WriteString(`</tbody></table><br>`)
+		}
+		if len(result.GoogleItems) > 0 {
+			sb.WriteString(fmt.Sprintf(`<h3>Google CSE Results (%d)</h3>`, len(result.GoogleItems)))
+			sb.WriteString(`<table><thead><tr><th>Title</th><th>URL</th><th>Snippet</th></tr></thead><tbody>`)
+			for _, item := range result.GoogleItems {
+				sb.WriteString(fmt.Sprintf(`<tr><td>%s</td><td><a href="%s" target="_blank">%s</a></td><td>%s</td></tr>`,
+					html.EscapeString(item.Title), html.EscapeString(item.Link), html.EscapeString(item.Link), html.EscapeString(item.Snippet)))
 			}
 			sb.WriteString(`</tbody></table>`)
 		}

@@ -96,3 +96,42 @@ func TestQueryGitHubCodeMock(t *testing.T) {
 		t.Errorf("expected file .env, got %s", res.Items[0].Name)
 	}
 }
+
+func TestQueryGoogleCSEMock(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Query().Get("key") != "test_g_key" || r.URL.Query().Get("cx") != "test_cx" {
+			w.WriteHeader(http.StatusBadRequest)
+			fmt.Fprintln(w, `{"error": {"message": "Invalid credentials", "code": 400}}`)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		fmt.Fprintln(w, `{
+			"searchInformation": {"totalResults": "1"},
+			"items": [
+				{
+					"title": "Exposed Config",
+					"link": "https://example.com/.env",
+					"snippet": "DB_PASSWORD=secret"
+				}
+			]
+		}`)
+	}))
+	defer server.Close()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+
+	res, err := QueryGoogleCSE(ctx, "test_g_key", "test_cx", "site:example.com filename:.env", server.URL)
+	if err != nil {
+		t.Fatalf("QueryGoogleCSE failed: %v", err)
+	}
+
+	if len(res.Items) != 1 {
+		t.Fatalf("expected 1 item, got %d", len(res.Items))
+	}
+
+	if res.Items[0].Link != "https://example.com/.env" {
+		t.Errorf("expected link https://example.com/.env, got %s", res.Items[0].Link)
+	}
+}

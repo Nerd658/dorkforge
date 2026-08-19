@@ -12,9 +12,11 @@ import (
 
 	"github.com/Nerd658/dorkforge/internal/browser"
 	"github.com/Nerd658/dorkforge/internal/completion"
+	"github.com/Nerd658/dorkforge/internal/diff"
 	"github.com/Nerd658/dorkforge/internal/dorks"
 	"github.com/Nerd658/dorkforge/internal/engine"
 	"github.com/Nerd658/dorkforge/internal/fetcher"
+	"github.com/Nerd658/dorkforge/internal/ignore"
 	"github.com/Nerd658/dorkforge/internal/models"
 	"github.com/Nerd658/dorkforge/internal/output"
 	"github.com/Nerd658/dorkforge/internal/prober"
@@ -206,6 +208,8 @@ func handleScan(args []string) {
 		probeFlag       bool
 		batchSize       int
 		delayMs         int
+		ignoreFlag      string
+		diffFlag        string
 		noColor         bool
 	)
 
@@ -226,6 +230,8 @@ func handleScan(args []string) {
 	fs.StringVar(&formatFlag, "f", "markdown", "Export format: markdown, json, html, urls")
 	fs.StringVar(&formatFlag, "format", "markdown", "Export format: markdown, json, html, urls")
 	fs.StringVar(&customFlag, "custom", "", "Path to custom JSON dorks file")
+	fs.StringVar(&ignoreFlag, "ignore", "", "Path to .dfgignore rules file")
+	fs.StringVar(&diffFlag, "diff", "", "Path to previous JSON scan report to calculate new vs resolved findings")
 	fs.BoolVar(&openBrowser, "open", false, "Open generated queries in default web browser")
 	fs.BoolVar(&liveFlag, "live", false, "Scrape DuckDuckGo search results in real-time")
 	fs.BoolVar(&probeFlag, "probe", false, "Actively probe target host for exposed files")
@@ -336,9 +342,23 @@ func handleScan(args []string) {
 		}
 	}
 
+	ignoreRules, _ := ignore.LoadIgnoreRules(ignoreFlag)
+
 	for _, target := range targets {
 		summary := engine.BuildScanSummary(target, catalog, filters)
+		summary = ignoreRules.FilterScanResults(&summary)
+
 		output.PrintScanResults(os.Stdout, summary, noColor)
+
+		if diffFlag != "" {
+			prevSummary, err := diff.LoadPreviousSummary(diffFlag)
+			if err == nil && prevSummary != nil {
+				diffRes := diff.CompareSummaries(summary, *prevSummary)
+				fmt.Printf("[DIFF REPORT] New Signatures Matched: %d | Resolved Signatures: %d\n\n", diffRes.NewCount, diffRes.ResolvedCount)
+			} else {
+				fmt.Fprintf(os.Stderr, "Warning: failed to load diff file %s: %v\n", diffFlag, err)
+			}
+		}
 
 		if liveFlag && len(summary.Results) > 0 {
 			fmt.Printf("\n--- [LIVE SEARCH RESULTS EXTRACTION (DuckDuckGo)] ---\n\n")
@@ -1003,6 +1023,10 @@ func handleRecon(args []string) {
 		delayMs         int
 		shodanKey       string
 		githubToken     string
+		googleKey       string
+		googleCX        string
+		ignoreFlag      string
+		diffFlag        string
 		noColor         bool
 	)
 
@@ -1018,6 +1042,10 @@ func handleRecon(args []string) {
 	fs.StringVar(&engineFlag, "engine", "all", "Engines to use: google, github, duckduckgo, bing, shodan, or all")
 	fs.StringVar(&outputFlag, "o", "", "Output report destination path")
 	fs.StringVar(&outputFlag, "output", "", "Output report destination path")
+	fs.StringVar(&googleKey, "google-key", "", "Optional Google Custom Search Engine API key")
+	fs.StringVar(&googleCX, "google-cx", "", "Optional Google Custom Search Engine CX ID")
+	fs.StringVar(&ignoreFlag, "ignore", "", "Path to .dfgignore rules file")
+	fs.StringVar(&diffFlag, "diff", "", "Path to previous JSON scan report to calculate new vs resolved findings")
 	fs.StringVar(&formatFlag, "f", "html", "Export format: html, markdown, json")
 	fs.StringVar(&formatFlag, "format", "html", "Export format: html, markdown, json")
 	fs.BoolVar(&noFetch, "no-fetch", false, "Skip historical archive URL mining")
@@ -1106,6 +1134,12 @@ func handleRecon(args []string) {
 	if githubToken == "" {
 		githubToken = os.Getenv("GITHUB_TOKEN")
 	}
+	if googleKey == "" {
+		googleKey = os.Getenv("GOOGLE_API_KEY")
+	}
+	if googleCX == "" {
+		googleCX = os.Getenv("GOOGLE_CX")
+	}
 
 	reconOpts := recon.ReconOptions{
 		SkipFetch:    noFetch,
@@ -1119,6 +1153,9 @@ func handleRecon(args []string) {
 		Concurrency:  concurrency,
 		ShodanAPIKey: shodanKey,
 		GitHubToken:  githubToken,
+		GoogleAPIKey: googleKey,
+		GoogleCX:     googleCX,
+		IgnoreFile:   ignoreFlag,
 	}
 
 	var targets []string

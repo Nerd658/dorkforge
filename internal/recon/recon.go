@@ -9,6 +9,7 @@ import (
 	"github.com/Nerd658/dorkforge/internal/dorks"
 	"github.com/Nerd658/dorkforge/internal/engine"
 	"github.com/Nerd658/dorkforge/internal/fetcher"
+	"github.com/Nerd658/dorkforge/internal/ignore"
 	"github.com/Nerd658/dorkforge/internal/models"
 	"github.com/Nerd658/dorkforge/internal/prober"
 	"github.com/Nerd658/dorkforge/internal/scraper"
@@ -27,6 +28,9 @@ type ReconOptions struct {
 	Concurrency  int
 	ShodanAPIKey string
 	GitHubToken  string
+	GoogleAPIKey string
+	GoogleCX     string
+	IgnoreFile   string
 }
 
 // DefaultReconOptions returns standard reconnaissance configuration.
@@ -50,6 +54,7 @@ type ReconResult struct {
 	ProbeResults  []prober.ProbeResult       `json:"probe_results,omitempty"`
 	ShodanMatches []api.ShodanMatch          `json:"shodan_matches,omitempty"`
 	GitHubItems   []api.GitHubCodeItem       `json:"github_items,omitempty"`
+	GoogleItems   []api.GoogleCSESnippetItem `json:"google_items,omitempty"`
 	RiskScore     int                        `json:"risk_score"`
 	ExposedCount  int                        `json:"exposed_count"`
 }
@@ -90,6 +95,9 @@ func RunRecon(ctx context.Context, target string, opts ReconOptions, onPhase Pha
 		Engines:     opts.Engines,
 	}
 	scan := engine.BuildScanSummary(target, dorks.DefaultCatalog, filterOpts)
+	ignoreRules, _ := ignore.LoadIgnoreRules(opts.IgnoreFile)
+	filteredScan := ignoreRules.FilterScanResults(&scan)
+	scan = filteredScan
 	res.Scan = &scan
 	callPhase("Scan", "completed")
 
@@ -179,6 +187,15 @@ func RunRecon(ctx context.Context, target string, opts ReconOptions, onPhase Pha
 			res.GitHubItems = ghRes.Items
 		}
 		callPhase("GitHub API", "completed")
+	}
+
+	if opts.GoogleAPIKey != "" && opts.GoogleCX != "" {
+		callPhase("Google API", "started")
+		gRes, err := api.QueryGoogleCSE(ctx, opts.GoogleAPIKey, opts.GoogleCX, "site:"+target+" filename:.env", "")
+		if err == nil && gRes != nil {
+			res.GoogleItems = gRes.Items
+		}
+		callPhase("Google API", "completed")
 	}
 
 	res.RiskScore = (crit * 10) + (high * 5) + (med * 2) + (low * 1) + (res.ExposedCount * 15) + (sensitiveArchiveURLs * 3)
