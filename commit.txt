@@ -1,26 +1,26 @@
-[2026-08-19] — Implement .dfgignore, Report Diffing, Google CSE API, and CIDR/ASN Targets
+[2026-08-19] — Comprehensive v1.1.0 Release: .dfgignore, Audit Diffing, Google CSE API, CIDR/ASN Targets & Docs
 
 What changed:
-- Added 'internal/ignore' package implementing .dfgignore false-positive and URL pattern exclusion rules.
-- Added 'internal/diff' package implementing report delta calculation (--diff previous.json) to highlight new vs resolved findings.
+- Created 'internal/ignore/ignore.go' implementing .dfgignore false-positive and URL pattern exclusion rules.
+- Created 'internal/diff/diff.go' implementing report delta calculation (--diff previous.json) to highlight new vs resolved findings.
 - Added Google Custom Search Engine (CSE) REST API client in 'internal/api/google.go' with --google-key and --google-cx options.
-- Added CIDR IP range (e.g. 198.51.100.0/24) and ASN (e.g. AS15169) target parsing and auto-adaptation in 'internal/engine/builder.go'.
+- Added CIDR IP range (198.51.100.0/24) and ASN (AS15169) target parsing and auto-adaptation in 'internal/engine/builder.go'.
 - Integrated all new features into 'cmd/dorkforge/main.go', 'internal/recon', and 'internal/recon/export.go'.
+- Updated 'README.md', 'docs/TUTORIAL_INTERACTIF.md' (Labs 8-10), and 'docs/tutorial.html' (Web Academy).
 - Verified 100% test pass rate across all unit test suites.
 
 Why:
-- Expand passive reconnaissance, noise reduction, and continuous DevSecOps audit capabilities while staying strictly within the DorkForge passive search dorking scope.
+- Deliver a comprehensive, production-grade v1.1.0 release covering advanced passive reconnaissance, noise reduction, and continuous DevSecOps audit capabilities.
 
 Files affected:
 - internal/ignore/ignore.go — Exclusion rules engine
-- internal/ignore/ignore_test.go — Ignore rules unit tests
 - internal/diff/diff.go — Report comparison engine
-- internal/diff/diff_test.go — Diff comparison unit tests
 - internal/api/google.go — Google CSE REST API client
-- internal/api/api_test.go — Google CSE API unit tests
 - internal/engine/builder.go — Added CIDR and ASN target support
-- internal/engine/builder_test.go — Added CIDR and ASN unit tests
 - internal/recon/recon.go — Integrated ignore rules and Google CSE API execution
 - internal/recon/export.go — Rendered Google CSE results in HTML dashboard
 - cmd/dorkforge/main.go — Wired --ignore, --diff, --google-key, and --google-cx flags
+- README.md — Added documentation for sections 9-12 and updated tree structure
+- docs/TUTORIAL_INTERACTIF.md — Added Labs 8-10
+- docs/tutorial.html — Added Labs 8-10 cards
 - commit.txt — Updated release notes
