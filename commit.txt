@@ -1,16 +1,14 @@
-[2026-08-19] — Add Launch All Button in HTML Reports and CLI --open Browser Execution
+[2026-08-19] — Update Documentation and Interactive Academy with Recon Pipeline and UI Enhancements
 
 What changed:
-- Added interactive '🚀 Launch All Visible Dorks' button in standalone HTML dashboards (internal/output/exporter.go and internal/recon/export.go).
-- Added client-side JavaScript batching (300ms polite delay per tab) to prevent browser pop-up blockers from swallowing multi-tab query launches.
-- Added '--open', '--batch-size', and '--delay' flags to 'dfg recon' command in main.go, enabling direct multi-tab browser opening from terminal.
-- Updated unit tests and verified 100% pass rate.
+- Updated 'docs/TUTORIAL_INTERACTIF.md' with Lab 7 ("Full Automated Reconnaissance Pipeline dfg recon").
+- Updated 'docs/tutorial.html' (Interactive Web Academy) with Lab 7 card and command references.
+- Documented 'dfg recon' flag combinations (--no-live, --no-probe, --open), HTML report "Launch All" buttons, and batching parameters.
 
 Why:
-- Allow security auditors to launch all target dork queries into browser tabs in one click from HTML reports or directly from terminal commands.
+- Ensure all technical documentation, hands-on labs, and interactive web tutorials accurately reflect the new automated pipeline and UI features.
 
 Files affected:
-- internal/output/exporter.go — Added Launch All button and JS handler
-- internal/recon/export.go — Added Launch All button to Recon HTML dashboard
-- cmd/dorkforge/main.go — Added --open, --batch-size, --delay to handleRecon
+- docs/TUTORIAL_INTERACTIF.md — Added Lab 7 and updated dfg command aliases
+- docs/tutorial.html — Added Lab 7 card to web academy
 - commit.txt — Updated release notes

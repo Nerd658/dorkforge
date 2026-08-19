@@ -1060,7 +1060,12 @@
                 <div class="card">
                     <div class="card-title" style="margin-bottom: 8px;">Lab 6: HTTP Status Probing</div>
                     <p>Concurrent non-intrusive HTTP probing with worker pools to classify live 200 OK vs 403 vs Soft 404.</p>
-                    <code style="font-size: 11px;">go test -v ./internal/prober/</code>
+                    <code style="font-size: 11px;">dfg probe -d target.com -t 20 -o probe.html</code>
+                </div>
+                <div class="card">
+                    <div class="card-title" style="margin-bottom: 8px;">Lab 7: All-in-One Recon Pipeline</div>
+                    <p>Full automated 4-phase pipeline (dorks + archives + live scraping + HTTP probing) with multi-tab dashboard.</p>
+                    <code style="font-size: 11px;">dfg recon -d target.com -o audit.html -f html</code>
                 </div>
             </div>
         </section>

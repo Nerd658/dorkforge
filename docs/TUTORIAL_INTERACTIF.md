@@ -199,10 +199,11 @@ In this module, you will work through 6 realistic security auditing labs using `
   +-------------------------------------------------------------------------+
   | Lab 1: Cloud & SaaS Footprinting (S3, Firebase, Notion, Drive)          |
   | Lab 2: Leaked Credentials & API Tokens Triage (OpenAI, Stripe, AWS)     |
-  | Lab 3: Subdomain Discovery via Negative Operators (df subdomains)       |
-  | Lab 4: Mining Historical Web Archives (df fetch / Wayback)              |
-  | Lab 5: Real-time Search Result Scraping (df scan --live)                |
-  | Lab 6: HTTP Status Verification & Non-Intrusive Validation (df probe)   |
+  | Lab 3: Subdomain Discovery via Negative Operators (dfg subdomains)      |
+  | Lab 4: Mining Historical Web Archives (dfg fetch / Wayback)             |
+  | Lab 5: Real-time Search Result Scraping (dfg scan --live)               |
+  | Lab 6: HTTP Status Verification & Non-Intrusive Validation (dfg probe)  |
+  | Lab 7: Full Automated Recon Pipeline (dfg recon - scan+fetch+probe)     |
   +-------------------------------------------------------------------------+
 ```
 
@@ -554,6 +555,53 @@ ok      github.com/Nerd658/dorkforge/internal/prober    0.004s
 | `200 OK` | `text/html` with `<title>Page Not Found</title>` | **FALSE POSITIVE** | SPA Soft-404; mark as non-exploitable. |
 | `401 / 403`| `text/html` with standard auth challenge | **SECURED (Mitigated)** | Asset is protected by access control. |
 | `404` | Standard error page | **CLEAN** | Asset does not exist. |
+
+---
+
+## Lab 7: Full Automated Reconnaissance Pipeline (`dfg recon`)
+
+### Context & Threat Scenario
+During a red team engagement or comprehensive AppSec audit, running individual subcommands sequentially (`scan`, `fetch`, `probe`) requires manual effort. The `dfg recon` command automates all 4 phases sequentially and generates a consolidated risk score alongside an interactive multi-tab HTML report.
+
+### Pipeline Execution Architecture
+
+```
+                       dfg recon -d example.com
+                                  │
+  ┌───────────────────────────────┼───────────────────────────────┐
+  ▼                               ▼                               ▼
+[PHASE 1: SCAN DORKS]     [PHASE 2: ARCHIVES]         [PHASE 3: LIVE SCRAPING]
+Synthesizes 70+ dorks     Wayback + AlienVault        Scrapes DuckDuckGo for
+across 12 categories      Extracts sensitive URLs     live indexed targets
+  │                               │                               │
+  └───────────────────────────────┼───────────────────────────────┘
+                                  ▼
+                     [PHASE 4: HTTP PROBING]
+                     Worker pool checks 200/403/401
+                     Status codes on sensitive paths
+                                  │
+                                  ▼
+                 [MULTI-TAB HTML AUDIT DASHBOARD]
+                 - Overview & Circular Risk Score Gauge
+                 - Dork Signatures & "Launch All" Button
+                 - Live SERP Findings & Snippets
+                 - Confirmed Active Exposed Endpoints
+```
+
+### Terminal Commands & Workflow
+
+Run the complete all-in-one pipeline and export an interactive dashboard:
+
+```bash
+# 1. Full automated audit with multi-tab HTML dashboard
+./bin/dorkforge recon -d target-app.net -o /tmp/recon-report.html -f html
+
+# 2. Open queries directly in browser tabs from terminal
+./bin/dorkforge recon -d target-app.net -c configs,secrets --open --batch-size 5
+
+# 3. Fast passive-only audit (skip live scraping and active probing)
+./bin/dorkforge recon -d target-app.net --no-live --no-probe -o /tmp/passive-recon.html
+```
 
 ---
 
