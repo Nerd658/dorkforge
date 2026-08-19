@@ -341,10 +341,10 @@ func ExportReconHTML(result *ReconResult) []byte {
 </div>
 
 <div class="tabs">
-	<div class="tab active" onclick="switchTab('overview')">Overview</div>
-	<div class="tab" onclick="switchTab('dorks')">Dork Signatures</div>
-	<div class="tab" onclick="switchTab('live')">Live Findings</div>
-	<div class="tab" onclick="switchTab('probes')">Probe Results</div>
+	<div class="tab active" onclick="switchTab(event, 'overview')">Overview</div>
+	<div class="tab" onclick="switchTab(event, 'dorks')">Dork Signatures</div>
+	<div class="tab" onclick="switchTab(event, 'live')">Live Findings</div>
+	<div class="tab" onclick="switchTab(event, 'probes')">Probe Results</div>
 </div>
 
 <div id="overview" class="tab-content active">
@@ -497,11 +497,13 @@ func ExportReconHTML(result *ReconResult) []byte {
 </div>
 
 <script>
-function switchTab(tabId) {
+function switchTab(evt, tabId) {
 	document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
 	document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
 	document.getElementById(tabId).classList.add('active');
-	event.currentTarget.classList.add('active');
+	if (evt && evt.currentTarget) {
+		evt.currentTarget.classList.add('active');
+	}
 }
 
 function filterTable(tableId, inputId) {
