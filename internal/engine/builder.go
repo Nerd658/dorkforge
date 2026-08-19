@@ -15,21 +15,27 @@ type FilterOptions struct {
 	SearchQuery string
 }
 
+// SanitizeTarget cleans and normalizes a target domain without allocations when already clean.
 func SanitizeTarget(raw string) string {
 	target := strings.TrimSpace(raw)
-	target = strings.TrimPrefix(target, "https://")
-	target = strings.TrimPrefix(target, "http://")
-	target = strings.TrimPrefix(target, "ftp://")
+	if strings.HasPrefix(target, "https://") {
+		target = target[8:]
+	} else if strings.HasPrefix(target, "http://") {
+		target = target[7:]
+	} else if strings.HasPrefix(target, "ftp://") {
+		target = target[6:]
+	}
 
-	if idx := strings.Index(target, "/"); idx != -1 {
+	if idx := strings.IndexByte(target, '/'); idx != -1 {
 		target = target[:idx]
 	}
-	if idx := strings.Index(target, ":"); idx != -1 {
+	if idx := strings.IndexByte(target, ':'); idx != -1 {
 		target = target[:idx]
 	}
 	return strings.ToLower(strings.TrimSpace(target))
 }
 
+// ExtractOrgName extracts the primary organization identifier from a domain name.
 func ExtractOrgName(target string) string {
 	sanitized := SanitizeTarget(target)
 	parts := strings.Split(sanitized, ".")
@@ -39,6 +45,7 @@ func ExtractOrgName(target string) string {
 	return sanitized
 }
 
+// GenerateSearchURL creates direct search URLs for each engine.
 func GenerateSearchURL(engine models.Engine, query string) string {
 	escapedQuery := url.QueryEscape(query)
 	switch engine {
@@ -57,20 +64,39 @@ func GenerateSearchURL(engine models.Engine, query string) string {
 	}
 }
 
+// RenderQuery renders a template replacing target and organization tokens.
 func RenderQuery(template string, target string) string {
-	org := ExtractOrgName(target)
-	q := strings.ReplaceAll(template, "{{TARGET}}", target)
-	q = strings.ReplaceAll(q, "{{DOMAIN}}", target)
-	q = strings.ReplaceAll(q, "{{ORG}}", org)
+	return RenderQueryFast(template, target, "")
+}
+
+// RenderQueryFast renders query template with pre-computed org name for maximum performance.
+func RenderQueryFast(template, target, org string) string {
+	if !strings.Contains(template, "{{") {
+		return template
+	}
+	q := template
+	if strings.Contains(q, "{{TARGET}}") {
+		q = strings.ReplaceAll(q, "{{TARGET}}", target)
+	}
+	if strings.Contains(q, "{{DOMAIN}}") {
+		q = strings.ReplaceAll(q, "{{DOMAIN}}", target)
+	}
+	if strings.Contains(q, "{{ORG}}") {
+		if org == "" {
+			org = ExtractOrgName(target)
+		}
+		q = strings.ReplaceAll(q, "{{ORG}}", org)
+	}
 	return q
 }
 
+// MatchesFilter checks if a dork matches all active user filters.
 func MatchesFilter(dork models.Dork, filters FilterOptions) bool {
 	// Category filter
 	if len(filters.Categories) > 0 {
 		matchedCategory := false
-		for _, cat := range filters.Categories {
-			if dork.Category == cat {
+		for i := range filters.Categories {
+			if dork.Category == filters.Categories[i] {
 				matchedCategory = true
 				break
 			}
@@ -90,8 +116,8 @@ func MatchesFilter(dork models.Dork, filters FilterOptions) bool {
 	// Engine filter
 	if len(filters.Engines) > 0 {
 		matchedEngine := false
-		for _, eng := range filters.Engines {
-			if dork.Engine == eng {
+		for i := range filters.Engines {
+			if dork.Engine == filters.Engines[i] {
 				matchedEngine = true
 				break
 			}
@@ -124,37 +150,44 @@ func MatchesFilter(dork models.Dork, filters FilterOptions) bool {
 	return true
 }
 
+// BuildScanSummary compiles scan results with pre-allocated slices and pre-computed org name.
 func BuildScanSummary(target string, catalog []models.Dork, filters FilterOptions) models.ScanSummary {
 	sanitizedTarget := SanitizeTarget(target)
-	summary := models.ScanSummary{
-		Target:         sanitizedTarget,
-		GeneratedAt:    time.Now().UTC().Format(time.RFC3339),
-		SeverityCounts: make(map[models.Severity]int),
-		CategoryCounts: make(map[models.Category]int),
-		EngineCounts:   make(map[models.Engine]int),
-		Results:        make([]models.ResolvedDork, 0),
-	}
+	orgName := ExtractOrgName(sanitizedTarget)
 
-	for _, dork := range catalog {
+	results := make([]models.ResolvedDork, 0, len(catalog))
+	sevCounts := make(map[models.Severity]int, 4)
+	catCounts := make(map[models.Category]int, 12)
+	engCounts := make(map[models.Engine]int, 5)
+
+	for i := range catalog {
+		dork := catalog[i]
 		if !MatchesFilter(dork, filters) {
 			continue
 		}
 
-		rendered := RenderQuery(dork.QueryTemplate, sanitizedTarget)
+		rendered := RenderQueryFast(dork.QueryTemplate, sanitizedTarget, orgName)
 		searchURL := GenerateSearchURL(dork.Engine, rendered)
 
-		summary.Results = append(summary.Results, models.ResolvedDork{
+		results = append(results, models.ResolvedDork{
 			Dork:          dork,
 			Target:        sanitizedTarget,
 			RenderedQuery: rendered,
 			SearchURL:     searchURL,
 		})
 
-		summary.SeverityCounts[dork.Severity]++
-		summary.CategoryCounts[dork.Category]++
-		summary.EngineCounts[dork.Engine]++
+		sevCounts[dork.Severity]++
+		catCounts[dork.Category]++
+		engCounts[dork.Engine]++
 	}
 
-	summary.TotalDorks = len(summary.Results)
-	return summary
+	return models.ScanSummary{
+		Target:         sanitizedTarget,
+		GeneratedAt:    time.Now().UTC().Format(time.RFC3339),
+		TotalDorks:     len(results),
+		SeverityCounts: sevCounts,
+		CategoryCounts: catCounts,
+		EngineCounts:   engCounts,
+		Results:        results,
+	}
 }

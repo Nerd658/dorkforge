@@ -68,6 +68,22 @@ var SensitiveKeywords = []string{
 	"password", "token", "secret", "admin", "backup", "config", "api", "v1", "v2", "internal",
 }
 
+var (
+	sensitiveExtMap = make(map[string]bool, len(SensitiveExtensions))
+	ignoredExtMap   = map[string]bool{
+		".css": true, ".jpg": true, ".jpeg": true, ".png": true, ".gif": true,
+		".svg": true, ".ico": true, ".woff": true, ".woff2": true, ".ttf": true,
+		".eot": true, ".mp4": true, ".webm": true, ".avi": true, ".mp3": true,
+		".wav": true, ".ogg": true,
+	}
+)
+
+func init() {
+	for _, ext := range SensitiveExtensions {
+		sensitiveExtMap[ext] = true
+	}
+}
+
 // MatchesSensitiveExtension tests whether a URL ends with or contains a sensitive file extension.
 func MatchesSensitiveExtension(rawURL string) (bool, string) {
 	u, err := url.Parse(rawURL)
@@ -87,15 +103,15 @@ func MatchesSensitiveExtension(rawURL string) (bool, string) {
 	}
 	pathLower = strings.TrimRight(pathLower, "/")
 
-	for _, ext := range SensitiveExtensions {
-		if strings.HasSuffix(pathLower, ext) {
+	if idx := strings.LastIndex(pathLower, "."); idx != -1 {
+		ext := pathLower[idx:]
+		if sensitiveExtMap[ext] {
 			return true, ext
 		}
-		if ext == ".env" && (strings.Contains(pathLower, "/.env") || strings.HasPrefix(pathLower, ".env")) {
-			return true, ".env"
-		}
 	}
-
+	if strings.Contains(pathLower, "/.env") || strings.HasPrefix(pathLower, ".env") {
+		return true, ".env"
+	}
 	return false, ""
 }
 

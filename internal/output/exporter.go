@@ -25,15 +25,17 @@ func ExportJSON(summary models.ScanSummary) ([]byte, error) {
 
 func ExportURLs(summary models.ScanSummary) []byte {
 	var sb strings.Builder
-	for _, res := range summary.Results {
-		sb.WriteString(res.SearchURL)
-		sb.WriteString("\n")
+	sb.Grow(len(summary.Results) * 120)
+	for i := range summary.Results {
+		sb.WriteString(summary.Results[i].SearchURL)
+		sb.WriteByte('\n')
 	}
 	return []byte(sb.String())
 }
 
 func ExportMarkdown(summary models.ScanSummary) []byte {
 	var sb strings.Builder
+	sb.Grow(len(summary.Results)*220 + 2048)
 
 	sb.WriteString("# Security Dorking & Passive Reconnaissance Report\n\n")
 	sb.WriteString(fmt.Sprintf("- **Target Domain**: `%s`\n", summary.Target))
@@ -77,6 +79,7 @@ func ExportMarkdown(summary models.ScanSummary) []byte {
 
 func ExportHTML(summary models.ScanSummary) []byte {
 	var sb strings.Builder
+	sb.Grow(len(summary.Results)*300 + 4096)
 
 	sb.WriteString(`<!DOCTYPE html>
 <html lang="en">
