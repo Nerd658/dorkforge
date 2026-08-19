@@ -26,24 +26,59 @@ const (
 | (_| | (_) | |  |   <|  _| (_) | | | (_| |  __/
  \__,_|\___/|_|  |_|\_\_|  \___/|_|  \__, |\___|
                                      |___/      
- Advanced Search Dorking & Passive Reconnaissance Engine
-`
+ Advanced Search Dorking & Passive Reconnaissance Engine`
+)
+
+const (
+	cReset   = "\033[0m"
+	cBold    = "\033[1m"
+	cDim     = "\033[2m"
+	cRed     = "\033[1;31m"
+	cGreen   = "\033[1;32m"
+	cYellow  = "\033[1;33m"
+	cBlue    = "\033[1;34m"
+	cMagenta = "\033[1;35m"
+	cCyan    = "\033[1;36m"
+	cGray    = "\033[0;90m"
 )
 
 func printUsage() {
-	fmt.Print(AppBanner)
-	fmt.Printf("Version: %s | Repository: github.com/Nerd658/dorkforge\n\n", Version)
-	fmt.Println("Usage:")
-	fmt.Println("  dorkforge <command> [arguments]")
-	fmt.Println("\nAvailable Commands:")
-	fmt.Println("  scan         Execute a dorking reconnaissance audit against a target domain")
-	fmt.Println("  subdomains   Generate negative exclusion dorks for subdomain discovery")
-	fmt.Println("  list         Display the complete catalog of built-in search signatures")
-	fmt.Println("  categories   List all 12 supported dorking categories and descriptions")
-	fmt.Println("  completion   Generate shell autocompletion scripts (bash, zsh, fish)")
-	fmt.Println("  version      Show the current version and build information")
-	fmt.Println("\nRun 'dorkforge <command> -h' for command-specific flags and examples.")
-	fmt.Println()
+	noColor := output.ShouldDisableColor()
+	cyan, green, yellow, bold, dim, reset := "", "", "", "", "", ""
+	if !noColor {
+		cyan = cCyan
+		green = cGreen
+		yellow = cYellow
+		bold = cBold
+		dim = cDim
+		reset = cReset
+	}
+
+	fmt.Printf("%s%s%s\n", cyan, AppBanner, reset)
+	fmt.Printf(" %sVersion:%s %sv%s%s  %s|%s  %sRepository:%s %sgithub.com/Nerd658/dorkforge%s\n\n",
+		dim, reset, bold, Version, reset, dim, reset, dim, reset, cyan, reset)
+
+	fmt.Printf("%s%sUSAGE%s\n", bold, yellow, reset)
+	fmt.Printf("  dorkforge %s<command>%s [flags]\n\n", green, reset)
+
+	fmt.Printf("%s%sAVAILABLE COMMANDS%s\n", bold, yellow, reset)
+	fmt.Printf("  %s%-14s%s %sExecute passive dorking reconnaissance on target domain(s)%s\n", green, "scan", reset, dim, reset)
+	fmt.Printf("  %s%-14s%s %sGenerate negative exclusion queries for subdomain discovery%s\n", green, "subdomains", reset, dim, reset)
+	fmt.Printf("  %s%-14s%s %sDisplay built-in signatures catalog with filters%s\n", green, "list", reset, dim, reset)
+	fmt.Printf("  %s%-14s%s %sList all 12 supported audit categories and risk ratings%s\n", green, "categories", reset, dim, reset)
+	fmt.Printf("  %s%-14s%s %sGenerate shell autocompletion scripts (bash, zsh, fish)%s\n", green, "completion", reset, dim, reset)
+	fmt.Printf("  %s%-14s%s %sDisplay version information%s\n", green, "version", reset, dim, reset)
+
+	fmt.Printf("\n%s%sQUICK START EXAMPLES%s\n", bold, yellow, reset)
+	fmt.Printf("  %s# 1. Audit critical configs and secrets for a domain%s\n", dim, reset)
+	fmt.Printf("  dorkforge scan -d %sexample.com%s -c %sconfigs,secrets%s -s %shigh%s\n\n", cyan, reset, green, reset, cRed, reset)
+	fmt.Printf("  %s# 2. Export full Markdown audit report and HTML dashboard%s\n", dim, reset)
+	fmt.Printf("  dorkforge scan -d %sexample.com%s -o %saudit.md%s -f %smarkdown%s\n", cyan, reset, yellow, reset, green, reset)
+	fmt.Printf("  dorkforge scan -d %sexample.com%s -o %sdashboard.html%s -f %shtml%s\n\n", cyan, reset, yellow, reset, green, reset)
+	fmt.Printf("  %s# 3. Discover unmapped subdomains with negative search operators%s\n", dim, reset)
+	fmt.Printf("  dorkforge subdomains -d %sexample.com%s --exclude %smail,blog,app%s\n\n", cyan, reset, yellow, reset)
+
+	fmt.Printf("%sRun 'dorkforge <command> -h' for detailed flags and options.%s\n\n", dim, reset)
 }
 
 func main() {
@@ -145,6 +180,45 @@ func handleScan(args []string) {
 	fs.IntVar(&batchSize, "batch-size", 5, "Number of search tabs to open per batch")
 	fs.IntVar(&delayMs, "delay", 2000, "Delay in milliseconds between browser batches")
 	fs.BoolVar(&noColor, "no-color", false, "Disable colorized terminal output")
+
+	fs.Usage = func() {
+		noCol := output.ShouldDisableColor()
+		yellow, green, cyan, bold, dim, reset := "", "", "", "", "", ""
+		if !noCol {
+			yellow = cYellow
+			green = cGreen
+			cyan = cCyan
+			bold = cBold
+			dim = cDim
+			reset = cReset
+		}
+
+		fmt.Printf("\n%s%sSCAN COMMAND USAGE%s\n", bold, yellow, reset)
+		fmt.Printf("  dorkforge scan %s-d <domain>%s [flags]\n", cyan, reset)
+		fmt.Printf("  dorkforge scan %s-l <targets.txt>%s [flags]\n\n", cyan, reset)
+
+		fmt.Printf("%s%sTARGET OPTIONS%s\n", bold, yellow, reset)
+		fmt.Printf("  %s-d, --domain%s %s<string>%s         Target root domain (e.g. example.com)\n", green, reset, cyan, reset)
+		fmt.Printf("  %s-l, --list%s   %s<file>%s           Path to file containing domain targets (one per line)\n\n", green, reset, cyan, reset)
+
+		fmt.Printf("%s%sFILTER OPTIONS%s\n", bold, yellow, reset)
+		fmt.Printf("  %s-c, --category%s %s<list>%s         Categories (configs, secrets, admin, backups, cloud, etc.) [default: all]\n", green, reset, cyan, reset)
+		fmt.Printf("  %s-s, --min-severity%s %s<level>%s    Minimum risk severity (low, medium, high, critical)\n", green, reset, cyan, reset)
+		fmt.Printf("  %s-e, --engine%s %s<list>%s           Search engines (google, github, duckduckgo, bing, shodan) [default: all]\n", green, reset, cyan, reset)
+		fmt.Printf("  %s-q, --search%s %s<keyword>%s        Filter dorks by search keyword\n", green, reset, cyan, reset)
+		fmt.Printf("  %s--custom%s %s<path.json>%s          Path to custom JSON dorks catalog\n\n", green, reset, cyan, reset)
+
+		fmt.Printf("%s%sEXPORT & REPORT OPTIONS%s\n", bold, yellow, reset)
+		fmt.Printf("  %s-o, --output%s %s<file>%s           Output report destination path (report.md, dashboard.html, data.json)\n", green, reset, cyan, reset)
+		fmt.Printf("  %s-f, --format%s %s<fmt>%s            Export format: markdown, html, json, urls [default: markdown]\n", green, reset, cyan, reset)
+		fmt.Printf("  %s--no-color%s                      Disable colorized terminal output\n\n", green, reset)
+
+		fmt.Printf("%s%sBROWSER OPTIONS%s\n", bold, yellow, reset)
+		fmt.Printf("  %s--open%s                          Open generated search queries in default web browser\n", green, reset)
+		fmt.Printf("  %s--batch-size%s %s<int>%s            Number of browser tabs to open per batch [default: 5]\n", green, reset, cyan, reset)
+		fmt.Printf("  %s--delay%s %s<ms>%s                  Delay in milliseconds between browser batches [default: 2000]\n\n", green, reset, cyan, reset)
+		fmt.Printf("%s%s%s\n", dim, "Run 'dorkforge -h' for global options.", reset)
+	}
 
 	_ = fs.Parse(args)
 
@@ -264,6 +338,31 @@ func handleSubdomains(args []string) {
 	fs.BoolVar(&openBrowser, "open", false, "Open subdomain dorks in default browser")
 	fs.BoolVar(&noColor, "no-color", false, "Disable color output")
 
+	fs.Usage = func() {
+		noCol := output.ShouldDisableColor()
+		yellow, green, cyan, bold, dim, reset := "", "", "", "", "", ""
+		if !noCol {
+			yellow = cYellow
+			green = cGreen
+			cyan = cCyan
+			bold = cBold
+			dim = cDim
+			reset = cReset
+		}
+
+		fmt.Printf("\n%s%sSUBDOMAINS COMMAND USAGE%s\n", bold, yellow, reset)
+		fmt.Printf("  dorkforge subdomains %s-d <domain>%s [flags]\n\n", cyan, reset)
+
+		fmt.Printf("%s%sOPTIONS%s\n", bold, yellow, reset)
+		fmt.Printf("  %s-d, --domain%s  %s<string>%s        Target domain (e.g. example.com)\n", green, reset, cyan, reset)
+		fmt.Printf("  %s--exclude%s     %s<list>%s          Known subdomains to exclude (e.g. mail,blog,app)\n", green, reset, cyan, reset)
+		fmt.Printf("  %s-o, --output%s  %s<file>%s          Output file destination path\n", green, reset, cyan, reset)
+		fmt.Printf("  %s-f, --format%s  %s<fmt>%s           Export format: markdown, html, json, urls [default: markdown]\n", green, reset, cyan, reset)
+		fmt.Printf("  %s--open%s                          Open generated queries in default web browser\n", green, reset)
+		fmt.Printf("  %s--no-color%s                      Disable color output\n\n", green, reset)
+		fmt.Printf("%s%s%s\n", dim, "Run 'dorkforge -h' for global options.", reset)
+	}
+
 	_ = fs.Parse(args)
 
 	if domainFlag == "" {
@@ -340,6 +439,28 @@ func handleList(args []string) {
 	fs.StringVar(&customFlag, "custom", "", "Include custom dorks JSON file")
 	fs.BoolVar(&noColor, "no-color", false, "Disable color output")
 
+	fs.Usage = func() {
+		noCol := output.ShouldDisableColor()
+		yellow, green, cyan, bold, dim, reset := "", "", "", "", "", ""
+		if !noCol {
+			yellow = cYellow
+			green = cGreen
+			cyan = cCyan
+			bold = cBold
+			dim = cDim
+			reset = cReset
+		}
+
+		fmt.Printf("\n%s%sLIST COMMAND USAGE%s\n", bold, yellow, reset)
+		fmt.Printf("  dorkforge list [flags]\n\n")
+
+		fmt.Printf("%s%sOPTIONS%s\n", bold, yellow, reset)
+		fmt.Printf("  %s-c%s        %s<category>%s          Filter catalog by category name\n", green, reset, cyan, reset)
+		fmt.Printf("  %s--custom%s  %s<path.json>%s         Include custom JSON signatures catalog\n", green, reset, cyan, reset)
+		fmt.Printf("  %s--no-color%s                      Disable color output\n\n", green, reset)
+		fmt.Printf("%s%s%s\n", dim, "Run 'dorkforge -h' for global options.", reset)
+	}
+
 	_ = fs.Parse(args)
 
 	if output.ShouldDisableColor() {
@@ -373,57 +494,89 @@ func handleList(args []string) {
 }
 
 func handleCategories() {
-	fmt.Printf("\n================================================================================\n")
-	fmt.Println(" DORKFORGE SUPPORTED CATEGORIES (12 CATEGORIES)")
-	fmt.Printf("================================================================================\n\n")
+	noCol := output.ShouldDisableColor()
+	cyan, bold, dim, reset := "", "", "", ""
+	if !noCol {
+		cyan = cCyan
+		bold = cBold
+		dim = cDim
+		reset = cReset
+	}
+
+	fmt.Printf("\n%s================================================================================%s\n", dim, reset)
+	fmt.Printf(" %s%sDORKFORGE SUPPORTED CATEGORIES (12 CATEGORIES)%s\n", bold, cyan, reset)
+	fmt.Printf("%s================================================================================%s\n\n", dim, reset)
 
 	categoriesInfo := []struct {
 		Name        string
 		Severity    string
+		SevColor    string
 		Description string
 	}{
-		{"configs", "CRITICAL", "Exposed .env files, server configurations (nginx, apache), docker-compose"},
-		{"secrets", "CRITICAL", "AWS access keys, SSH/RSA private keys, GitHub tokens, database passwords"},
-		{"admin", "HIGH", "Administrative login portals, phpMyAdmin, Jenkins, Grafana, Kibana"},
-		{"backups", "HIGH", "Database dumps (.sql, .dump), compressed source archives (.tar.gz, .zip)"},
-		{"cloud", "HIGH/MED", "Public Amazon S3 buckets, Azure Blob containers, Google Cloud Storage"},
-		{"source-code", "HIGH", "Exposed .git folders, code leaks on GitHub / GitLab"},
-		{"errors", "MEDIUM", "PHP info diagnostics, framework stack traces, application error logs"},
-		{"docs", "MED/LOW", "Confidential PDF documents, payroll spreadsheets, internal organigrams"},
-		{"api-endpoints", "HIGH", "Exposed Swagger/OpenAPI specs, GraphQL consoles, Postman collections"},
-		{"subdomains", "LOW", "Search engine exclusion chains and Shodan SSL certificate recon"},
-		{"network-iot", "HIGH", "Router/firewall interfaces (pfSense, FortiGate), web terminals"},
-		{"employees-osint", "LOW", "LinkedIn profiles, employee directories, email footprinting"},
+		{"configs", "CRITICAL", cRed, "Exposed .env files, server configurations (nginx, apache), docker-compose"},
+		{"secrets", "CRITICAL", cRed, "AWS access keys, SSH/RSA private keys, GitHub tokens, database passwords"},
+		{"admin", "HIGH", cYellow, "Administrative login portals, phpMyAdmin, Jenkins, Grafana, Kibana"},
+		{"backups", "HIGH", cYellow, "Database dumps (.sql, .dump), compressed source archives (.tar.gz, .zip)"},
+		{"cloud", "HIGH/MED", cYellow, "Public Amazon S3 buckets, Azure Blob containers, Google Cloud Storage"},
+		{"source-code", "HIGH", cYellow, "Exposed .git folders, code leaks on GitHub / GitLab"},
+		{"errors", "MEDIUM", cBlue, "PHP info diagnostics, framework stack traces, application error logs"},
+		{"docs", "MED/LOW", cBlue, "Confidential PDF documents, payroll spreadsheets, internal organigrams"},
+		{"api-endpoints", "HIGH", cYellow, "Exposed Swagger/OpenAPI specs, GraphQL consoles, Postman collections"},
+		{"subdomains", "LOW", cCyan, "Search engine exclusion chains and Shodan SSL certificate recon"},
+		{"network-iot", "HIGH", cYellow, "Router/firewall interfaces (pfSense, FortiGate), web terminals"},
+		{"employees-osint", "LOW", cCyan, "LinkedIn profiles, employee directories, email footprinting"},
 	}
 
 	for _, c := range categoriesInfo {
-		fmt.Printf("- %-18s [%-8s] : %s\n", c.Name, c.Severity, c.Description)
+		sevColor := ""
+		if !noCol {
+			sevColor = c.SevColor
+		}
+		fmt.Printf("  %s%-18s%s %s[%-8s]%s : %s%s%s\n",
+			cyan, c.Name, reset,
+			sevColor, c.Severity, reset,
+			dim, c.Description, reset,
+		)
 	}
 	fmt.Println()
 }
 
 func handleCompletion(args []string) {
 	if len(args) < 1 || args[0] == "-h" || args[0] == "--help" || args[0] == "help" {
-		fmt.Printf("\n================================================================================\n")
-		fmt.Println(" DORKFORGE SHELL AUTOCOMPLETION GENERATOR")
-		fmt.Printf("================================================================================\n\n")
-		fmt.Println("Generate autocompletion scripts for Bash, Zsh, or Fish.")
-		fmt.Println("\nUsage:")
-		fmt.Println("  dorkforge completion <shell>")
-		fmt.Println("\nSupported Shells:")
-		fmt.Println("  bash         Generate autocompletion script for Bash")
-		fmt.Println("  zsh          Generate autocompletion script for Zsh")
-		fmt.Println("  fish         Generate autocompletion script for Fish")
-		fmt.Println("\nInstallation Examples:")
-		fmt.Println("  # Bash:")
-		fmt.Println("  dorkforge completion bash > /etc/bash_completion.d/dorkforge")
-		fmt.Println("  # or in ~/.bashrc:")
-		fmt.Println("  source <(dorkforge completion bash)")
-		fmt.Println("\n  # Zsh:")
-		fmt.Println("  dorkforge completion zsh > \"${fpath[1]}/_dorkforge\"")
-		fmt.Println("\n  # Fish:")
-		fmt.Println("  dorkforge completion fish > ~/.config/fish/completions/dorkforge.fish")
-		fmt.Println()
+		noCol := output.ShouldDisableColor()
+		yellow, green, cyan, bold, dim, reset := "", "", "", "", "", ""
+		if !noCol {
+			yellow = cYellow
+			green = cGreen
+			cyan = cCyan
+			bold = cBold
+			dim = cDim
+			reset = cReset
+		}
+
+		fmt.Printf("\n%s================================================================================%s\n", dim, reset)
+		fmt.Printf(" %s%sDORKFORGE SHELL AUTOCOMPLETION GENERATOR%s\n", bold, cyan, reset)
+		fmt.Printf("%s================================================================================%s\n\n", dim, reset)
+		fmt.Printf("%sGenerate fast autocompletion scripts for your interactive shell.%s\n\n", dim, reset)
+
+		fmt.Printf("%s%sUSAGE%s\n", bold, yellow, reset)
+		fmt.Printf("  dorkforge completion %s<shell>%s\n\n", green, reset)
+
+		fmt.Printf("%s%sSUPPORTED SHELLS%s\n", bold, yellow, reset)
+		fmt.Printf("  %s%-12s%s %sGenerate autocompletion script for Bash%s\n", green, "bash", reset, dim, reset)
+		fmt.Printf("  %s%-12s%s %sGenerate autocompletion script for Zsh%s\n", green, "zsh", reset, dim, reset)
+		fmt.Printf("  %s%-12s%s %sGenerate autocompletion script for Fish%s\n\n", green, "fish", reset, dim, reset)
+
+		fmt.Printf("%s%sINSTALLATION EXAMPLES%s\n", bold, yellow, reset)
+		fmt.Printf("  %s# Bash (temporary or current session):%s\n", dim, reset)
+		fmt.Printf("  source <(dorkforge completion %sbash%s)\n\n", green, reset)
+		fmt.Printf("  %s# Bash (persistent):%s\n", dim, reset)
+		fmt.Printf("  dorkforge completion %sbash%s > ~/.local/share/bash-completion/completions/dorkforge\n\n", green, reset)
+		fmt.Printf("  %s# Zsh:%s\n", dim, reset)
+		fmt.Printf("  dorkforge completion %szsh%s > \"${fpath[1]}/_dorkforge\"\n\n", green, reset)
+		fmt.Printf("  %s# Fish:%s\n", dim, reset)
+		fmt.Printf("  dorkforge completion %sfish%s > ~/.config/fish/completions/dorkforge.fish\n\n", green, reset)
+
 		if len(args) >= 1 && (args[0] == "-h" || args[0] == "--help" || args[0] == "help") {
 			return
 		}
