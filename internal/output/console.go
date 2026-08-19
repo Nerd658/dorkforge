@@ -121,3 +121,30 @@ func ShouldDisableColor() bool {
 	}
 	return false
 }
+
+// PrintProbeSummary prints the results of active endpoint probing.
+func PrintProbeSummary(w io.Writer, target string, results []interface{}, noColor bool) {
+	// Handled via specialized formatters in main or output
+}
+
+// StatusCodeColor returns color codes for HTTP statuses.
+func StatusCodeColor(code int, noColor bool) (string, string) {
+	if noColor {
+		return "", ""
+	}
+	switch {
+	case code >= 200 && code < 300:
+		return colorGreen, colorReset
+	case code >= 300 && code < 400:
+		return colorYellow, colorReset
+	case code >= 400 && code < 500:
+		if code == 403 || code == 401 {
+			return colorYellow, colorReset
+		}
+		return colorGray, colorReset
+	case code >= 500:
+		return colorRed, colorReset
+	default:
+		return colorGray, colorReset
+	}
+}

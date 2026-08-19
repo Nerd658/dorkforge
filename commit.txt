@@ -1,28 +1,38 @@
-[2026-08-19] — Add Exploit-DB GHDB signatures, shell completion, and benchmark test suite
+[2026-08-19] — Implement Archive Fetcher, Live Search Scraper, Active HTTP Prober, and Interactive Training Course
 
 What changed:
-- Expanded dork signatures catalog with Exploit-DB GHDB, modern Cloud (Firebase, Google Sheets, Jira, Notion), Dev frameworks (Spring Boot Actuators, Next.js, Prisma, Terraform tfstate), and AI credentials (OpenAI, Anthropic, Slack, Stripe).
-- Added cross-shell autocompletion generator for Bash, Zsh, and Fish via 'dorkforge completion <shell>'.
-- Added comprehensive benchmark test suites profiling target sanitization, query rendering, and export serialization (JSON, HTML, Markdown, URLs).
-- Added catalog integrity test suite verifying category, severity, engine, and query template conformity.
+- Added 'fetch' command (internal/fetcher) integrating Wayback Machine CDX and AlienVault OTX APIs for passive historical URL discovery, classification, and sensitive asset filtering.
+- Added 'probe' command (internal/prober) for concurrent active HTTP endpoint validation (200 OK, 403 Forbidden, 401 Unauthorized) across critical paths (.env, .git, /actuator/env, Swagger, SQL dumps).
+- Added '--live' flag on 'scan' command (internal/scraper) providing real-time DuckDuckGo HTML search results extraction without external dependencies.
+- Added interactive training course and hands-on lab manual in docs/TUTORIAL_INTERACTIF.md and interactive HTML academy in docs/tutorial.html.
+- Added 'bin/df' alias and symlink generation in Makefile.
+- Updated CLI command routing and help screens in cmd/dorkforge/main.go.
 
 Why:
-- Provide comprehensive exposure coverage aligned with Exploit-DB GHDB standards and ensure high CLI developer experience and verified benchmark throughput.
+- Expand DorkForge from a passive query synthesis engine into a comprehensive attack surface assessment and reconnaissance suite with passive archive mining, live search scraping, active status probing, and complete educational documentation.
 
 Files affected:
-- cmd/dorkforge/main.go — Added completion subcommand handler and updated usage text
-- internal/completion/completion.go — Shell script generators for Bash, Zsh, and Fish
-- internal/completion/completion_test.go — Completion generation test suite
-- internal/dorks/expanded.go — 48+ new high-value dork signatures
-- internal/dorks/catalog_test.go — Catalog integrity test suite
-- internal/engine/benchmark_test.go — Performance benchmarks for engine operations
-- internal/output/benchmark_test.go — Performance benchmarks for report exporters
-- README.md — Updated feature list, shell completion setup instructions, and architecture
+- cmd/dorkforge/main.go — Added fetch and probe commands, integrated --live and --probe flags
+- internal/fetcher/fetcher.go — Historical archive URL aggregator and sensitive classifier
+- internal/fetcher/wayback.go — Wayback Machine CDX API client
+- internal/fetcher/alienvault.go — AlienVault OTX API client
+- internal/fetcher/fetcher_test.go — Fetcher unit test suite with mock servers
+- internal/prober/prober.go — Active HTTP concurrent endpoint prober and heuristic analyzer
+- internal/prober/prober_test.go — Prober unit test suite with mock servers
+- internal/scraper/scraper.go — Scraper domain models and interfaces
+- internal/scraper/duckduckgo.go — DuckDuckGo HTML search result parser
+- internal/scraper/scraper_test.go — Scraper unit test suite with mock HTML
+- docs/TUTORIAL_INTERACTIF.md — Complete interactive course and lab manual
+- docs/tutorial.html — Interactive single-page web academy
+- Makefile — Added df symlink generation upon build
+- README.md — Updated feature matrix and usage examples
 - commit.txt — Updated release notes
 
 Breaking changes:
 - None
 
 Notes for review:
-- Test shell completion with 'source <(./bin/dorkforge completion bash)'.
-- Execute benchmarks with 'go test -bench=. -benchmem ./...'.
+- Test passive fetch: './bin/df fetch -d example.com --subs --sensitive-only'
+- Test live search: './bin/df scan -d example.com -c configs --live'
+- Test active probe: './bin/df probe -d example.com -c configs,secrets'
+- Open interactive academy: 'xdg-open docs/tutorial.html'

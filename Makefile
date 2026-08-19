@@ -9,7 +9,8 @@ all: test build
 build:
 	@mkdir -p $(BUILD_DIR)
 	$(GO) build -ldflags="-s -w" -o $(BUILD_DIR)/$(BINARY_NAME) ./cmd/dorkforge
-	@echo "Build complete: $(BUILD_DIR)/$(BINARY_NAME)"
+	@ln -sf $(BINARY_NAME) $(BUILD_DIR)/df
+	@echo "Build complete: $(BUILD_DIR)/$(BINARY_NAME) (and symlink $(BUILD_DIR)/df)"
 
 test:
 	$(GO) test -v -race ./...
@@ -19,3 +20,4 @@ clean:
 
 install: build
 	cp $(BUILD_DIR)/$(BINARY_NAME) $(HOME)/go/bin/$(BINARY_NAME) || sudo cp $(BUILD_DIR)/$(BINARY_NAME) /usr/local/bin/$(BINARY_NAME)
+	@echo "Installed dorkforge to PATH"
