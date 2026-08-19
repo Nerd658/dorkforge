@@ -150,6 +150,57 @@ dfg recon -d example.com -o audit.html
 dfg recon -d example.com --shodan-key="your_key" --github-token="your_pat" -o audit.html
 ```
 
+### 9. False-Positive Filtering (`.dfgignore`)
+Filter out known non-issues, specific dork IDs, or URL patterns using a `.dfgignore` file:
+
+```bash
+# Auto-detects .dfgignore in working directory, or specify via flag:
+dfg scan -d example.com --ignore my_exclusions.dfgignore
+```
+
+Example `.dfgignore` rules file:
+```text
+# Ignore specific dork ID
+dork_id: google-s3-public-bucket
+
+# Ignore entire category
+category: employees-osint
+
+# Ignore URL pattern
+url: *known-sitemap.xml*
+```
+
+### 10. Audit Delta Comparison (`--diff`)
+Compare current scan findings against a previous JSON report to highlight only newly discovered exposures:
+
+```bash
+# Export initial baseline scan
+dfg scan -d example.com -o baseline.json -f json
+
+# Run subsequent audit comparing against baseline
+dfg scan -d example.com --diff baseline.json -o weekly_audit.html -f html
+```
+
+### 11. Optional Google CSE API Integration
+Pass Google Custom Search Engine credentials (`GOOGLE_API_KEY` and `GOOGLE_CX`) for direct API query resolution:
+
+```bash
+export GOOGLE_API_KEY="AIzaSy..."
+export GOOGLE_CX="0123456789..."
+dfg recon -d example.com -o google_api_report.html
+```
+
+### 12. CIDR Subnet & ASN Target Auditing
+Audit entire IP subnets (`198.51.100.0/24`) or Autonomous Systems (`AS15169`). DorkForge automatically converts target filters for Shodan & Bing:
+
+```bash
+# Audit an IPv4 CIDR range
+dfg scan -d 198.51.100.0/24 -e shodan
+
+# Audit an ASN infrastructure
+dfg scan -d AS15169 -e shodan
+```
+
 ---
 
 ## Project Structure
@@ -160,6 +211,14 @@ dorkforge/
 │   └── dorkforge/
 │       └── main.go                  # CLI Entrypoint, completion & flag routing
 ├── internal/
+│   ├── api/
+│   │   ├── google.go                # Google CSE REST API client
+│   │   ├── shodan.go                # Shodan REST API client
+│   │   └── github.go                # GitHub Code Search REST API client
+│   ├── diff/
+│   │   └── diff.go                  # Report delta comparison engine (--diff)
+│   ├── ignore/
+│   │   └── ignore.go                # .dfgignore false-positive rules engine
 │   ├── models/
 │   │   └── dork.go                  # Core data models (Dork, Category, Severity, Engine)
 │   ├── dorks/
@@ -176,7 +235,10 @@ dorkforge/
 │   │   ├── scraper.go               # Scraper interfaces and config
 │   │   └── duckduckgo.go            # DuckDuckGo HTML search results parser
 │   ├── engine/
-│   │   └── builder.go               # Target sanitization & query URL generator
+│   │   └── builder.go               # Target sanitization, CIDR/ASN parser & query generator
+│   ├── recon/
+│   │   ├── recon.go                 # 4-phase automated reconnaissance pipeline
+│   │   └── export.go                # Multi-tab HTML, Markdown & JSON report generator
 │   ├── completion/
 │   │   └── completion.go            # Bash, Zsh, Fish completion script generator
 │   ├── output/
@@ -187,6 +249,12 @@ dorkforge/
 │   └── subdomains/
 │       └── enum.go                  # Subdomain exclusion query generator
 ├── docs/
+│   ├── TUTORIAL_INTERACTIF.md       # Interactive technical training manual (Labs 1-10)
+│   └── tutorial.html                # Web Academy interactive interface
+├── Dockerfile                       # Multi-stage Alpine container build
+├── docker-compose.yml               # Container service orchestrator
+└── Makefile                         # Build automation rules
+```
 │   ├── TUTORIAL_INTERACTIF.md       # Complete hands-on training course and labs
 │   └── tutorial.html                # Interactive single-page web academy
 ├── Makefile                         # Build, test, install automation
