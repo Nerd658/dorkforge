@@ -381,7 +381,10 @@ func ExportReconHTML(result *ReconResult) []byte {
 </div>
 
 <div id="dorks" class="tab-content">
-	<input type="text" class="filter-input" id="dorks-filter" placeholder="Filter signatures..." onkeyup="filterTable('dorks-table', 'dorks-filter')">
+	<div style="display:flex; gap:10px; margin-bottom: 15px;">
+		<input type="text" class="filter-input" id="dorks-filter" style="margin-bottom:0;" placeholder="Filter signatures..." onkeyup="filterTable('dorks-table', 'dorks-filter')">
+		<button onclick="launchAllDorks()" class="btn" style="background:#1f6beb; padding:0 20px; white-space:nowrap; cursor:pointer;">🚀 Launch All Dorks</button>
+	</div>
 	<table id="dorks-table">
 		<thead>
 			<tr>
@@ -531,6 +534,25 @@ function filterDivs(containerId, inputId) {
 		} else {
 			items[i].style.display = "none";
 		}
+function launchAllDorks() {
+	const table = document.getElementById("dorks-table");
+	const tr = table.getElementsByTagName("tr");
+	const links = [];
+	for (let i = 1; i < tr.length; i++) {
+		if (tr[i].style.display !== "none") {
+			const a = tr[i].querySelector("a.btn");
+			if (a && a.href) {
+				links.push(a.href);
+			}
+		}
+	}
+	if (links.length === 0) return;
+	if (confirm("Open " + links.length + " search queries in browser tabs?")) {
+		links.forEach((url, idx) => {
+			setTimeout(() => {
+				window.open(url, "_blank");
+			}, idx * 300);
+		});
 	}
 }
 </script>

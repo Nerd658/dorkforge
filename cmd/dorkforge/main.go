@@ -998,6 +998,9 @@ func handleRecon(args []string) {
 		fetchLimit      int
 		fetchTimeout    int
 		concurrency     int
+		openBrowser     bool
+		batchSize       int
+		delayMs         int
 		noColor         bool
 	)
 
@@ -1022,6 +1025,9 @@ func handleRecon(args []string) {
 	fs.IntVar(&fetchTimeout, "fetch-timeout", 15, "Archive query timeout in seconds")
 	fs.IntVar(&concurrency, "t", 15, "Probe concurrency / worker count")
 	fs.IntVar(&concurrency, "concurrency", 15, "Probe concurrency / worker count")
+	fs.BoolVar(&openBrowser, "open", false, "Open generated search queries in default web browser")
+	fs.IntVar(&batchSize, "batch-size", 5, "Number of search tabs to open per batch")
+	fs.IntVar(&delayMs, "delay", 2000, "Delay in milliseconds between browser batches")
 	fs.BoolVar(&noColor, "no-color", false, "Disable colorized terminal output")
 
 	fs.Usage = func() {
@@ -1192,6 +1198,17 @@ func handleRecon(args []string) {
 				fmt.Fprintf(os.Stderr, "Error writing report to %s: %v\n", outputFlag, err)
 			} else {
 				fmt.Printf("Report successfully exported to %s%s%s (format: %s)\n\n", cyan, outputFlag, r, formatFlag)
+			}
+		}
+
+		if openBrowser && result.Scan != nil && len(result.Scan.Results) > 0 {
+			var urls []string
+			for _, res := range result.Scan.Results {
+				urls = append(urls, res.SearchURL)
+			}
+			delayDuration := time.Duration(delayMs) * time.Millisecond
+			if err := browser.OpenBatch(urls, batchSize, delayDuration); err != nil {
+				fmt.Fprintf(os.Stderr, "Browser batch error: %v\n", err)
 			}
 		}
 	}

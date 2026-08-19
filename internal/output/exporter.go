@@ -144,7 +144,10 @@ func ExportHTML(summary models.ScanSummary) []byte {
         <div class="card"><h3>Medium</h3><div class="count med-text">` + fmt.Sprintf("%d", summary.SeverityCounts[models.SeverityMedium]) + `</div></div>
     </div>
 
-    <input type="text" id="searchInput" class="search-bar" placeholder="Filter by keyword, category, or query..." onkeyup="filterTable()">
+    <div style="display:flex; gap:10px; margin-bottom: 20px;">
+        <input type="text" id="searchInput" class="search-bar" style="margin-bottom:0;" placeholder="Filter by keyword, category, or query..." onkeyup="filterTable()">
+        <button onclick="launchAllVisible()" class="btn" style="background:#1f6beb; padding:0 20px; white-space:nowrap; cursor:pointer;">🚀 Launch All Visible Dorks</button>
+    </div>
 
     <table id="dorksTable">
         <thead>
@@ -196,6 +199,24 @@ function filterTable() {
         } else {
             tr[i].style.display = "none";
         }
+function launchAllVisible() {
+    var tr = document.getElementById("dorksTable").getElementsByTagName("tr");
+    var links = [];
+    for (var i = 1; i < tr.length; i++) {
+        if (tr[i].style.display !== "none") {
+            var a = tr[i].querySelector("a.btn");
+            if (a && a.href) {
+                links.push(a.href);
+            }
+        }
+    }
+    if (links.length === 0) return;
+    if (confirm("Open " + links.length + " search queries in browser tabs?")) {
+        links.forEach(function(url, idx) {
+            setTimeout(function() {
+                window.open(url, "_blank");
+            }, idx * 300);
+        });
     }
 }
 </script>
