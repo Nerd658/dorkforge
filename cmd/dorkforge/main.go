@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/Nerd658/dorkforge/internal/browser"
+	"github.com/Nerd658/dorkforge/internal/completion"
 	"github.com/Nerd658/dorkforge/internal/dorks"
 	"github.com/Nerd658/dorkforge/internal/engine"
 	"github.com/Nerd658/dorkforge/internal/models"
@@ -39,6 +40,7 @@ func printUsage() {
 	fmt.Println("  subdomains   Generate negative exclusion dorks for subdomain discovery")
 	fmt.Println("  list         Display the complete catalog of built-in search signatures")
 	fmt.Println("  categories   List all 12 supported dorking categories and descriptions")
+	fmt.Println("  completion   Generate shell autocompletion scripts (bash, zsh, fish)")
 	fmt.Println("  version      Show the current version and build information")
 	fmt.Println("\nRun 'dorkforge <command> -h' for command-specific flags and examples.")
 	fmt.Println()
@@ -60,6 +62,8 @@ func main() {
 		handleList(os.Args[2:])
 	case "categories":
 		handleCategories()
+	case "completion":
+		handleCompletion(os.Args[2:])
 	case "version", "-v", "--version":
 		fmt.Printf("dorkforge v%s (go1.22+ linux/amd64)\n", Version)
 	case "help", "-h", "--help":
@@ -396,4 +400,42 @@ func handleCategories() {
 		fmt.Printf("- %-18s [%-8s] : %s\n", c.Name, c.Severity, c.Description)
 	}
 	fmt.Println()
+}
+
+func handleCompletion(args []string) {
+	if len(args) < 1 || args[0] == "-h" || args[0] == "--help" || args[0] == "help" {
+		fmt.Printf("\n================================================================================\n")
+		fmt.Println(" DORKFORGE SHELL AUTOCOMPLETION GENERATOR")
+		fmt.Printf("================================================================================\n\n")
+		fmt.Println("Generate autocompletion scripts for Bash, Zsh, or Fish.")
+		fmt.Println("\nUsage:")
+		fmt.Println("  dorkforge completion <shell>")
+		fmt.Println("\nSupported Shells:")
+		fmt.Println("  bash         Generate autocompletion script for Bash")
+		fmt.Println("  zsh          Generate autocompletion script for Zsh")
+		fmt.Println("  fish         Generate autocompletion script for Fish")
+		fmt.Println("\nInstallation Examples:")
+		fmt.Println("  # Bash:")
+		fmt.Println("  dorkforge completion bash > /etc/bash_completion.d/dorkforge")
+		fmt.Println("  # or in ~/.bashrc:")
+		fmt.Println("  source <(dorkforge completion bash)")
+		fmt.Println("\n  # Zsh:")
+		fmt.Println("  dorkforge completion zsh > \"${fpath[1]}/_dorkforge\"")
+		fmt.Println("\n  # Fish:")
+		fmt.Println("  dorkforge completion fish > ~/.config/fish/completions/dorkforge.fish")
+		fmt.Println()
+		if len(args) >= 1 && (args[0] == "-h" || args[0] == "--help" || args[0] == "help") {
+			return
+		}
+		os.Exit(1)
+	}
+
+	shell := args[0]
+	script, err := completion.Generate(shell)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		os.Exit(1)
+	}
+
+	fmt.Print(script)
 }

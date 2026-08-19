@@ -1,39 +1,28 @@
-[2026-08-19] — Initial release of dorkforge CLI tool
+[2026-08-19] — Add Exploit-DB GHDB signatures, shell completion, and benchmark test suite
 
 What changed:
-- Implemented modular CLI dorking & passive reconnaissance tool in Go.
-- Added comprehensive 12-category dork catalog (configs, secrets, admin, backups, cloud, source-code, errors, docs, api-endpoints, subdomains, network-iot, employees-osint).
-- Built multi-engine search URL adapters (Google, GitHub Code Search, DuckDuckGo, Bing, Shodan).
-- Added multi-format export capabilities (Markdown audit reports, JSON dataset, interactive HTML dashboard, and URL list).
-- Implemented subdomain exclusion chain query builder.
-- Added safe cross-platform browser opening with configurable batch sizes and delays.
-- Included full unit test suite, Makefile, and GitHub Actions CI workflow.
+- Expanded dork signatures catalog with Exploit-DB GHDB, modern Cloud (Firebase, Google Sheets, Jira, Notion), Dev frameworks (Spring Boot Actuators, Next.js, Prisma, Terraform tfstate), and AI credentials (OpenAI, Anthropic, Slack, Stripe).
+- Added cross-shell autocompletion generator for Bash, Zsh, and Fish via 'dorkforge completion <shell>'.
+- Added comprehensive benchmark test suites profiling target sanitization, query rendering, and export serialization (JSON, HTML, Markdown, URLs).
+- Added catalog integrity test suite verifying category, severity, engine, and query template conformity.
 
 Why:
-- Provide security auditors, DevSecOps engineers, and penetration testers with an automated, lightweight, and structured tool for external exposure assessments without sending active intrusive payloads.
+- Provide comprehensive exposure coverage aligned with Exploit-DB GHDB standards and ensure high CLI developer experience and verified benchmark throughput.
 
 Files affected:
-- cmd/dorkforge/main.go — CLI entrypoint, argument parsing, command handlers
-- internal/models/dork.go — Core domain types for dorks, categories, engines, and summaries
-- internal/models/dork_test.go — Unit tests for severity, categories, and models
-- internal/dorks/catalog.go — Embedded signature database across 12 categories
-- internal/dorks/custom.go — Custom JSON signature file loader
-- internal/engine/builder.go — Target sanitization, query rendering, and engine URL builders
-- internal/engine/builder_test.go — Unit tests for sanitization, rendering, and URL generation
-- internal/output/console.go — Terminal renderer with colorized ANSI output
-- internal/output/exporter.go — Exporters for Markdown, HTML dashboard, JSON, and URLs
-- internal/output/exporter_test.go — Exporter unit tests
-- internal/browser/opener.go — Safe browser opening with batching controls
-- internal/subdomains/enum.go — Negative exclusion query generator for subdomains
-- internal/subdomains/enum_test.go — Subdomain query builder tests
-- .github/workflows/ci.yml — Automated CI workflow
-- Makefile — Build and test automation
-- .gitignore — Ignore binaries, reports, and IDE artifacts
-- README.md — Comprehensive project documentation and usage examples
+- cmd/dorkforge/main.go — Added completion subcommand handler and updated usage text
+- internal/completion/completion.go — Shell script generators for Bash, Zsh, and Fish
+- internal/completion/completion_test.go — Completion generation test suite
+- internal/dorks/expanded.go — 48+ new high-value dork signatures
+- internal/dorks/catalog_test.go — Catalog integrity test suite
+- internal/engine/benchmark_test.go — Performance benchmarks for engine operations
+- internal/output/benchmark_test.go — Performance benchmarks for report exporters
+- README.md — Updated feature list, shell completion setup instructions, and architecture
+- commit.txt — Updated release notes
 
 Breaking changes:
 - None
 
 Notes for review:
-- Verify that Go 1.22+ is used to compile.
-- Test browser opening on local desktop environments with 'dorkforge scan -d <target> --open'.
+- Test shell completion with 'source <(./bin/dorkforge completion bash)'.
+- Execute benchmarks with 'go test -bench=. -benchmem ./...'.

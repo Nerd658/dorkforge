@@ -2,14 +2,27 @@
 
 `dorkforge` is a high-performance, modular Command-Line Interface (CLI) tool written in Go for automated search engine dorking, passive reconnaissance, and attack surface exposure assessment.
 
-It generates structured, targeted queries across major search providers (Google, GitHub Code Search, DuckDuckGo, Bing, and Shodan) categorized by risk severity and asset type.
+It generates structured, targeted queries across major search providers (Google, GitHub Code Search, DuckDuckGo, Bing, and Shodan) categorized by risk severity and asset type, inspired by Exploit-DB's Google Hacking Database (GHDB) and modern Cloud/API security standards.
 
 ---
 
 ## Key Features
 
-- **12 Specialized Categories**: Configurations, credentials & secrets, administration panels, database dumps, cloud storage buckets, source code leaks, application logs & error traces, sensitive documents, API endpoints & OpenAPI specs, subdomain discovery, IoT/network appliances, and OSINT employee footprints.
+- **70+ Built-in Signatures across 12 Specialized Categories**:
+  - `configs`: Exposed `.env`, Next.js/Nuxt envs, `wp-config.php`, Terraform `tfstate`, server configs (`nginx`, `apache`), `docker-compose.yml`, Prisma schema.
+  - `secrets`: AWS access keys, SSH/RSA private keys, OpenAI API keys, Slack webhooks, Stripe live tokens, Twilio credentials, SendGrid keys.
+  - `admin`: Management portals, phpMyAdmin, Jenkins CI, Grafana, Kibana, Kubernetes Dashboard, ArgoCD, SonarQube, Spring Boot Actuator endpoints.
+  - `backups`: Database dumps (`.sql`, `.dump`, SQLite `.db`), compressed source archives (`.tar.gz`, `.zip`), Spring Boot heap dumps (`/actuator/heapdump`), open directory index listings.
+  - `cloud`: Public Amazon S3 buckets & XML listings, Azure Blob storage, Google Cloud Storage, Firebase realtime databases, public Google Sheets/Drive, Notion workspaces.
+  - `source-code`: Exposed `/.git`, `/.svn`, JavaScript/TypeScript `.js.map` source maps, GitLab CI configs, package registry tokens (`.npmrc`).
+  - `errors`: Diagnostic pages (`phpinfo()`), Apache `/server-status`, framework debug stack traces (Django, ASP.NET), SQL syntax errors.
+  - `docs`: Confidential PDFs, HR/payroll spreadsheets, client billing/invoice records, VPN WireGuard profiles.
+  - `api-endpoints`: Swagger / OpenAPI documentation, GraphQL playgrounds & introspection, Postman collections, WSDL files.
+  - `subdomains`: Negative exclusion query generator, Bing subdomain indexing, Shodan SSL certificate discovery.
+  - `network-iot`: Router/firewall portals (pfSense, FortiGate, Cisco), web shells & terminal emulators, IP cameras & surveillance.
+  - `employees-osint`: LinkedIn employee footprinting, corporate staff directories, paste site disclosures.
 - **Multi-Engine Adapters**: Native query synthesis and URL generation for **Google**, **GitHub Code Search**, **DuckDuckGo**, **Bing**, and **Shodan**.
+- **Shell Autocompletion**: Built-in autocompletion generator for **Bash**, **Zsh**, and **Fish**.
 - **Multi-Target Support**: Audit single targets (`-d target.com`) or iterate over target lists (`-l domains.txt`).
 - **Flexible Filtering**: Filter by category (`-c configs,secrets`), severity (`--min-severity high`), search engine (`-e google,github`), or text search (`-q password`).
 - **Export Capabilities**: Export findings to **Markdown** audit reports, **JSON** data structures, interactive **HTML** dashboards, or plain **URL** lists.
@@ -37,6 +50,29 @@ make build
 make install
 # or
 go install github.com/Nerd658/dorkforge/cmd/dorkforge@latest
+```
+
+---
+
+## Shell Autocompletion
+
+### Bash
+```bash
+# Temporarily enable
+source <(dorkforge completion bash)
+
+# Persist for user session
+dorkforge completion bash > ~/.local/share/bash-completion/completions/dorkforge
+```
+
+### Zsh
+```bash
+dorkforge completion zsh > "${fpath[1]}/_dorkforge"
+```
+
+### Fish
+```bash
+dorkforge completion fish > ~/.config/fish/completions/dorkforge.fish
 ```
 
 ---
@@ -102,67 +138,60 @@ dorkforge list -c secrets
 
 ---
 
-## Supported Categories
-
-| Category | Severity | Description |
-|---|---|---|
-| `configs` | **CRITICAL** | Exposed `.env`, `wp-config.php`, web server configs, `docker-compose.yml` |
-| `secrets` | **CRITICAL** | AWS access keys, SSH/RSA private keys, GitHub tokens, database connection URIs |
-| `admin` | **HIGH** | Administrative portals, phpMyAdmin, Jenkins, Grafana, Kibana, Portainer |
-| `backups` | **HIGH** | Database dumps (`.sql`, `.dump`), compressed source archives (`.tar.gz`, `.zip`) |
-| `cloud` | **HIGH / MED** | Public Amazon S3 buckets, Azure Blob containers, Google Cloud Storage |
-| `source-code` | **HIGH** | Exposed `.git` folders, code leaks on GitHub / GitLab |
-| `errors` | **MEDIUM** | PHP info diagnostics, framework stack traces, application error logs |
-| `docs` | **MED / LOW** | Confidential PDF documents, payroll spreadsheets, internal organigrams |
-| `api-endpoints` | **HIGH** | Exposed Swagger/OpenAPI specs, GraphQL consoles, Postman collections |
-| `subdomains` | **LOW** | Search engine exclusion chains and Shodan SSL certificate recon |
-| `network-iot` | **HIGH** | Router/firewall interfaces (pfSense, FortiGate), web terminals |
-| `employees-osint` | **LOW** | LinkedIn profiles, employee directories, email footprinting |
-
----
-
 ## Project Structure
 
 ```
 dorkforge/
 ├── cmd/
 │   └── dorkforge/
-│       └── main.go              # CLI Entrypoint & Flag routing
+│       └── main.go                  # CLI Entrypoint, completion & flag routing
 ├── internal/
 │   ├── models/
-│   │   ├── dork.go              # Core data models (Dork, Category, Severity, Engine)
-│   │   └── dork_test.go         # Model unit tests
+│   │   ├── dork.go                  # Core data models (Dork, Category, Severity, Engine)
+│   │   └── dork_test.go             # Model unit tests
 │   ├── dorks/
-│   │   ├── catalog.go           # Embedded signatures catalog
-│   │   └── custom.go            # Custom JSON dork loader
+│   │   ├── catalog.go               # Base embedded signatures catalog
+│   │   ├── expanded.go              # Exploit-DB GHDB and modern cloud signatures
+│   │   ├── catalog_test.go          # Catalog integrity test suite
+│   │   └── custom.go                # Custom JSON dork loader
 │   ├── engine/
-│   │   ├── builder.go           # Target sanitization & query URL generator
-│   │   └── builder_test.go      # Engine unit tests
+│   │   ├── builder.go               # Target sanitization & query URL generator
+│   │   ├── builder_test.go          # Engine unit tests
+│   │   └── benchmark_test.go        # Engine performance benchmarks
+│   ├── completion/
+│   │   ├── completion.go            # Bash, Zsh, Fish completion script generator
+│   │   └── completion_test.go       # Completion unit tests
 │   ├── output/
-│   │   ├── console.go           # Terminal table formatter with ANSI colors
-│   │   ├── exporter.go          # Exporters (Markdown, HTML, JSON, URLs)
-│   │   └── exporter_test.go     # Exporter unit tests
+│   │   ├── console.go               # Terminal table formatter with ANSI colors
+│   │   ├── exporter.go              # Exporters (Markdown, HTML, JSON, URLs)
+│   │   ├── exporter_test.go         # Exporter unit tests
+│   │   └── benchmark_test.go        # Exporter performance benchmarks
 │   ├── browser/
-│   │   └── opener.go            # Cross-platform browser launcher with batching
+│   │   └── opener.go                # Cross-platform browser launcher with batching
 │   └── subdomains/
-│       ├── enum.go              # Subdomain exclusion query generator
-│       └── enum_test.go         # Subdomain unit tests
+│       ├── enum.go                  # Subdomain exclusion query generator
+│       └── enum_test.go             # Subdomain unit tests
 ├── .github/
 │   └── workflows/
-│       └── ci.yml               # Automated CI test pipeline
-├── Makefile                     # Build, test, and install automation
-├── go.mod                       # Go module definition
-└── README.md                    # Project documentation
+│       └── ci.yml                   # Automated CI test pipeline
+├── Makefile                         # Build, test, and install automation
+├── go.mod                           # Go module definition
+├── README.md                        # Project documentation
+└── commit.txt                       # Git commit change summary
 ```
 
 ---
 
-## Running Tests
+## Running Tests & Benchmarks
 
 ```bash
+# Run unit tests
 make test
 # or
 go test -v -race ./...
+
+# Run benchmark suite
+go test -bench=. -benchmem ./...
 ```
 
 ---
