@@ -67,7 +67,18 @@ docker compose run --rm dorkforge fetch -d example.com --subs --sensitive-only -
 
 ## Usage Guide
 
-### 1. Basic & Filtered Reconnaissance Scan
+### 1. Full Automated Reconnaissance Pipeline (`recon`)
+Run the all-in-one pipeline that executes passive archive mining, search dork synthesis, live engine scraping, and active HTTP probing into a consolidated multi-tab dashboard:
+
+```bash
+# Complete audit with interactive HTML dashboard
+dfg recon -d example.com -o full_audit.html -f html
+
+# Filtered recon focusing on high-risk configs and secrets
+dfg recon -d example.com -c configs,secrets -s high -o recon_report.md -f markdown
+```
+
+### 2. Basic & Filtered Reconnaissance Scan
 Scan a domain across all default categories or target specific high-risk assets:
 
 ```bash

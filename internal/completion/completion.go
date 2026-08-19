@@ -84,7 +84,7 @@ _dorkforge() {
         cword=$COMP_CWORD
     fi
 
-    local commands="scan fetch probe subdomains list categories completion version help"
+    local commands="scan fetch probe recon subdomains list categories completion version help"
     local categories="configs secrets admin backups cloud source-code errors docs api-endpoints subdomains network-iot employees-osint all"
     local severities="low medium high critical"
     local engines="google github duckduckgo bing shodan all"
@@ -96,7 +96,7 @@ _dorkforge() {
     local i
     for ((i = 1; i < cword; i++)); do
         case "${words[i]}" in
-            scan|fetch|probe|subdomains|list|categories|completion|version|help)
+            scan|fetch|probe|recon|subdomains|list|categories|completion|version|help)
                 cmd="${words[i]}"
                 break
                 ;;
@@ -170,6 +170,33 @@ _dorkforge() {
             esac
             if [[ "$cur" == -* ]]; then
                 COMPREPLY=( $(compgen -W "-d --domain -l --list -t --concurrency --timeout -o --output -f --format --no-color -h --help" -- "$cur") )
+            fi
+            ;;
+        recon)
+            case "$prev" in
+                -c|--category)
+                    COMPREPLY=( $(compgen -W "$categories" -- "$cur") )
+                    return 0
+                    ;;
+                -s|--min-severity)
+                    COMPREPLY=( $(compgen -W "$severities" -- "$cur") )
+                    return 0
+                    ;;
+                -e|--engine)
+                    COMPREPLY=( $(compgen -W "$engines" -- "$cur") )
+                    return 0
+                    ;;
+                -f|--format)
+                    COMPREPLY=( $(compgen -W "html markdown json" -- "$cur") )
+                    return 0
+                    ;;
+                -l|--list|-o|--output)
+                    _filedir 2>/dev/null || true
+                    return 0
+                    ;;
+            esac
+            if [[ "$cur" == -* ]]; then
+                COMPREPLY=( $(compgen -W "-d --domain -l --list -c --category -s --min-severity -e --engine -o --output -f --format --no-fetch --no-live --no-probe --fetch-limit --fetch-timeout -t --concurrency --no-color -h --help" -- "$cur") )
             fi
             ;;
         subdomains)
@@ -280,6 +307,7 @@ _dorkforge() {
                 'scan:Execute a passive dorking reconnaissance audit'
                 'fetch:Extract historical URLs from Wayback Machine and AlienVault OTX'
                 'probe:Actively probe HTTP status codes on sensitive endpoints'
+                'recon:Full automated reconnaissance pipeline (scan + fetch + live + probe)'
                 'subdomains:Generate negative exclusion dorks for subdomain discovery'
                 'list:Display the complete catalog of search signatures'
                 'categories:List all 12 supported dorking categories'
@@ -333,6 +361,24 @@ _dorkforge() {
                         '--no-color[Disable color output]' \
                         '(-h --help)'{-h,--help}'[Show help]'
                     ;;
+                recon)
+                    _arguments \
+                        '(-d --domain)'{-d,--domain}'[Target domain]:domain: ' \
+                        '(-l --list)'{-l,--list}'[Path to target domains file]:file:_files' \
+                        '(-c --category)'{-c,--category}'[Category filter]:category:_values -s , "categories" $categories' \
+                        '(-s --min-severity)'{-s,--min-severity}'[Minimum severity]:severity:_values "severities" $severities' \
+                        '(-e --engine)'{-e,--engine}'[Engine filter]:engine:_values -s , "engines" $engines' \
+                        '(-o --output)'{-o,--output}'[Output report path]:file:_files' \
+                        '(-f --format)'{-f,--format}'[Export format]:format:_values "formats" html markdown json' \
+                        '--no-fetch[Skip archive URL mining]' \
+                        '--no-live[Skip live search scraping]' \
+                        '--no-probe[Skip HTTP endpoint probing]' \
+                        '--fetch-limit[Max archive URLs]:int: ' \
+                        '--fetch-timeout[Archive query timeout]:int: ' \
+                        '(-t --concurrency)'{-t,--concurrency}'[Probe worker count]:int: ' \
+                        '--no-color[Disable color output]' \
+                        '(-h --help)'{-h,--help}'[Show help]'
+                    ;;
                 subdomains)
                     _arguments \
                         '(-d --domain)'{-d,--domain}'[Target domain]:domain: ' \
@@ -371,11 +417,12 @@ func GenerateFish() string {
 complete -c dorkforge -f
 complete -c dfg -f
 
-set -l commands scan fetch probe subdomains list categories completion version help
+set -l commands scan fetch probe recon subdomains list categories completion version help
 for cmd_name in dorkforge dfg
     complete -c $cmd_name -n "not __fish_seen_subcommand_from $commands" -a scan -d "Execute a dorking reconnaissance audit"
     complete -c $cmd_name -n "not __fish_seen_subcommand_from $commands" -a fetch -d "Extract historical URLs from archive indices"
     complete -c $cmd_name -n "not __fish_seen_subcommand_from $commands" -a probe -d "Actively probe HTTP status codes"
+    complete -c $cmd_name -n "not __fish_seen_subcommand_from $commands" -a recon -d "Full automated reconnaissance pipeline"
     complete -c $cmd_name -n "not __fish_seen_subcommand_from $commands" -a subdomains -d "Generate negative exclusion dorks for subdomain discovery"
     complete -c $cmd_name -n "not __fish_seen_subcommand_from $commands" -a list -d "Display the complete catalog of search signatures"
     complete -c $cmd_name -n "not __fish_seen_subcommand_from $commands" -a categories -d "List all 12 supported dorking categories"
@@ -424,6 +471,21 @@ for cmd_name in dorkforge dfg
     complete -c $cmd_name -n "__fish_seen_subcommand_from probe" -s o -l output -d "Output file path" -r -F
     complete -c $cmd_name -n "__fish_seen_subcommand_from probe" -s f -l format -d "Export format" -r -a "$formats"
     complete -c $cmd_name -n "__fish_seen_subcommand_from probe" -l no-color -d "Disable color output"
+
+    complete -c $cmd_name -n "__fish_seen_subcommand_from recon" -s d -l domain -d "Target domain" -r
+    complete -c $cmd_name -n "__fish_seen_subcommand_from recon" -s l -l list -d "Target list file" -r -F
+    complete -c $cmd_name -n "__fish_seen_subcommand_from recon" -s c -l category -d "Categories filter" -r -a "$categories"
+    complete -c $cmd_name -n "__fish_seen_subcommand_from recon" -s s -l min-severity -d "Minimum severity" -r -a "$severities"
+    complete -c $cmd_name -n "__fish_seen_subcommand_from recon" -s e -l engine -d "Engines filter" -r -a "$engines"
+    complete -c $cmd_name -n "__fish_seen_subcommand_from recon" -s o -l output -d "Output report path" -r -F
+    complete -c $cmd_name -n "__fish_seen_subcommand_from recon" -s f -l format -d "Export format" -r -a "html markdown json"
+    complete -c $cmd_name -n "__fish_seen_subcommand_from recon" -l no-fetch -d "Skip archive mining"
+    complete -c $cmd_name -n "__fish_seen_subcommand_from recon" -l no-live -d "Skip live search scraping"
+    complete -c $cmd_name -n "__fish_seen_subcommand_from recon" -l no-probe -d "Skip HTTP probing"
+    complete -c $cmd_name -n "__fish_seen_subcommand_from recon" -l fetch-limit -d "Max archive URLs" -r
+    complete -c $cmd_name -n "__fish_seen_subcommand_from recon" -l fetch-timeout -d "Archive timeout" -r
+    complete -c $cmd_name -n "__fish_seen_subcommand_from recon" -s t -l concurrency -d "Probe worker count" -r
+    complete -c $cmd_name -n "__fish_seen_subcommand_from recon" -l no-color -d "Disable color output"
 
     complete -c $cmd_name -n "__fish_seen_subcommand_from subdomains" -s d -l domain -d "Target domain (e.g. example.com)" -r
     complete -c $cmd_name -n "__fish_seen_subcommand_from subdomains" -l exclude -d "Comma-separated subdomains to exclude" -r

@@ -1,25 +1,28 @@
-[2026-08-19] — Add Container Support with Multi-Stage Dockerfile and Docker Compose Configuration
+[2026-08-19] — Implement Unified Reconnaissance Pipeline Command (dfg recon)
 
 What changed:
-- Added multi-stage 'Dockerfile' compiling static Go binary with stripped debug symbols (-ldflags="-s -w" -trimpath) on Alpine Linux runtime.
-- Added non-root unprivileged execution user (appuser:10001) with ca-certificates and tzdata.
-- Added 'docker-compose.yml' mapping local './reports' and './targets' volume mounts.
-- Added '.dockerignore' to keep the build context lightweight and fast.
-- Updated 'README.md' with Docker and Docker Compose build/run instructions.
+- Added 'internal/recon/recon.go' implementing a 4-phase automated reconnaissance pipeline (Dork Synthesis, Historical Archive Mining, Live DuckDuckGo Scraping, Active HTTP Probing) with consolidated risk scoring.
+- Added 'internal/recon/export.go' with multi-tab interactive HTML dashboard (Overview, Dorks, Live Findings, Probe Results), Markdown audit deliverable, and JSON exporters.
+- Added 'internal/recon/recon_test.go' unit test suite verifying pipeline orchestration, format exports, and phase callbacks.
+- Integrated 'recon' subcommand and 'handleRecon' in 'cmd/dorkforge/main.go'.
+- Updated shell autocompletion for Bash, Zsh, and Fish in 'internal/completion/completion.go'.
+- Updated 'README.md' with 'recon' pipeline usage instructions.
 
 Why:
-- Enable seamless containerized execution in isolated environments, container orchestration, and CI/CD pipelines without requiring local Go toolchain installation.
+- Enable security auditors and developers to run a single, fully automated end-to-end attack surface audit and receive a comprehensive unified report without having to execute multiple separate commands.
 
 Files affected:
-- Dockerfile — Multi-stage Alpine container build definition
-- docker-compose.yml — Compose service and volume definitions
-- .dockerignore — Build context exclusion rules
-- README.md — Container usage documentation
+- internal/recon/recon.go — Orchestration pipeline implementation
+- internal/recon/export.go — Multi-tab HTML, Markdown, and JSON report generator
+- internal/recon/recon_test.go — Unit tests for recon package
+- cmd/dorkforge/main.go — CLI routing and terminal formatting for recon
+- internal/completion/completion.go — Shell completions updated for recon
+- README.md — Recon command documentation
 - commit.txt — Updated release notes
 
 Breaking changes:
 - None
 
 Notes for review:
-- Build image: 'docker compose build'
-- Test scan: 'docker compose run --rm dorkforge scan -d example.com'
+- Run 'dfg recon -d example.com -o audit.html -f html'
+- Run 'go test -v ./internal/recon/...'

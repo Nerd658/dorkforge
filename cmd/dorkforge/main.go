@@ -18,6 +18,7 @@ import (
 	"github.com/Nerd658/dorkforge/internal/models"
 	"github.com/Nerd658/dorkforge/internal/output"
 	"github.com/Nerd658/dorkforge/internal/prober"
+	"github.com/Nerd658/dorkforge/internal/recon"
 	"github.com/Nerd658/dorkforge/internal/scraper"
 	"github.com/Nerd658/dorkforge/internal/subdomains"
 )
@@ -78,6 +79,7 @@ func printUsage() {
 	fmt.Printf("  %s%-14s%s %sExecute passive dorking reconnaissance on single or multiple targets%s\n", green, "scan", reset, dim, reset)
 	fmt.Printf("  %s%-14s%s %sExtract historical URLs from Wayback Machine CDX & AlienVault OTX%s\n", green, "fetch", reset, dim, reset)
 	fmt.Printf("  %s%-14s%s %sActively probe high-value exposed endpoints (HTTP status verification)%s\n", green, "probe", reset, dim, reset)
+	fmt.Printf("  %s%-14s%s %sFull automated reconnaissance pipeline (scan + fetch + live + probe)%s\n", green, "recon", reset, dim, reset)
 	fmt.Printf("  %s%-14s%s %sGenerate negative exclusion search chains for subdomain discovery%s\n", green, "subdomains", reset, dim, reset)
 	fmt.Printf("  %s%-14s%s %sInspect built-in signatures catalog with category and keyword filters%s\n", green, "list", reset, dim, reset)
 	fmt.Printf("  %s%-14s%s %sList all 12 audit categories, risk severities, and descriptions%s\n", green, "categories", reset, dim, reset)
@@ -135,6 +137,8 @@ func main() {
 		handleFetch(os.Args[2:])
 	case "probe":
 		handleProbe(os.Args[2:])
+	case "recon":
+		handleRecon(os.Args[2:])
 	case "subdomains":
 		handleSubdomains(os.Args[2:])
 	case "list":
@@ -973,6 +977,221 @@ func handleProbe(args []string) {
 				fmt.Fprintf(os.Stderr, "Error writing probe output: %v\n", err)
 			} else {
 				fmt.Printf("Probe results successfully exported to %s (format: %s)\n\n", outputFlag, formatFlag)
+			}
+		}
+	}
+}
+
+func handleRecon(args []string) {
+	fs := flag.NewFlagSet("recon", flag.ExitOnError)
+	var (
+		domainFlag      string
+		listFlag        string
+		categoryFlag    string
+		minSeverityFlag string
+		engineFlag      string
+		outputFlag      string
+		formatFlag      string
+		noFetch         bool
+		noLive          bool
+		noProbe         bool
+		fetchLimit      int
+		fetchTimeout    int
+		concurrency     int
+		noColor         bool
+	)
+
+	fs.StringVar(&domainFlag, "d", "", "Target domain (e.g. example.com)")
+	fs.StringVar(&domainFlag, "domain", "", "Target domain (e.g. example.com)")
+	fs.StringVar(&listFlag, "l", "", "Path to file containing domain targets (one per line)")
+	fs.StringVar(&listFlag, "list", "", "Path to file containing domain targets (one per line)")
+	fs.StringVar(&categoryFlag, "c", "all", "Comma-separated categories or 'all'")
+	fs.StringVar(&categoryFlag, "category", "all", "Comma-separated categories or 'all'")
+	fs.StringVar(&minSeverityFlag, "s", "", "Minimum severity filter: low, medium, high, critical")
+	fs.StringVar(&minSeverityFlag, "min-severity", "", "Minimum severity filter: low, medium, high, critical")
+	fs.StringVar(&engineFlag, "e", "all", "Engines to use: google, github, duckduckgo, bing, shodan, or all")
+	fs.StringVar(&engineFlag, "engine", "all", "Engines to use: google, github, duckduckgo, bing, shodan, or all")
+	fs.StringVar(&outputFlag, "o", "", "Output report destination path")
+	fs.StringVar(&outputFlag, "output", "", "Output report destination path")
+	fs.StringVar(&formatFlag, "f", "html", "Export format: html, markdown, json")
+	fs.StringVar(&formatFlag, "format", "html", "Export format: html, markdown, json")
+	fs.BoolVar(&noFetch, "no-fetch", false, "Skip historical archive URL mining")
+	fs.BoolVar(&noLive, "no-live", false, "Skip live DuckDuckGo search scraping")
+	fs.BoolVar(&noProbe, "no-probe", false, "Skip active HTTP endpoint probing")
+	fs.IntVar(&fetchLimit, "fetch-limit", 200, "Maximum archive URLs to retrieve")
+	fs.IntVar(&fetchTimeout, "fetch-timeout", 15, "Archive query timeout in seconds")
+	fs.IntVar(&concurrency, "t", 15, "Probe concurrency / worker count")
+	fs.IntVar(&concurrency, "concurrency", 15, "Probe concurrency / worker count")
+	fs.BoolVar(&noColor, "no-color", false, "Disable colorized terminal output")
+
+	fs.Usage = func() {
+		noCol := output.ShouldDisableColor()
+		yellow, green, cyan, bold, dim, reset := "", "", "", "", "", ""
+		if !noCol {
+			yellow = cYellow
+			green = cGreen
+			cyan = cCyan
+			bold = cBold
+			dim = cDim
+			reset = cReset
+		}
+
+		fmt.Printf("\n%s%sRECON COMMAND USAGE (Full Automated Reconnaissance Pipeline)%s\n", bold, yellow, reset)
+		fmt.Printf("  dorkforge recon %s-d <domain>%s [flags]\n", cyan, reset)
+		fmt.Printf("  dorkforge recon %s-l <targets.txt>%s [flags]\n\n", cyan, reset)
+
+		fmt.Printf("%s%sTARGET OPTIONS%s\n", bold, yellow, reset)
+		fmt.Printf("  %s-d, --domain%s %s<string>%s         Target root domain (e.g. example.com)\n", green, reset, cyan, reset)
+		fmt.Printf("  %s-l, --list%s   %s<file>%s           Path to file containing domain targets (one per line)\n\n", green, reset, cyan, reset)
+
+		fmt.Printf("%s%sFILTER OPTIONS%s\n", bold, yellow, reset)
+		fmt.Printf("  %s-c, --category%s %s<list>%s         Categories filter [default: all]\n", green, reset, cyan, reset)
+		fmt.Printf("  %s-s, --min-severity%s %s<level>%s    Minimum risk severity\n", green, reset, cyan, reset)
+		fmt.Printf("  %s-e, --engine%s %s<list>%s           Search engines filter [default: all]\n\n", green, reset, cyan, reset)
+
+		fmt.Printf("%s%sPHASE CONTROL%s\n", bold, yellow, reset)
+		fmt.Printf("  %s--no-fetch%s                       Skip historical archive mining (Wayback + AlienVault)\n", green, reset)
+		fmt.Printf("  %s--no-live%s                        Skip live DuckDuckGo search scraping\n", green, reset)
+		fmt.Printf("  %s--no-probe%s                       Skip active HTTP endpoint probing\n", green, reset)
+		fmt.Printf("  %s--fetch-limit%s %s<int>%s           Maximum archive URLs [default: 200]\n", green, reset, cyan, reset)
+		fmt.Printf("  %s--fetch-timeout%s %s<sec>%s         Archive query timeout [default: 15]\n", green, reset, cyan, reset)
+		fmt.Printf("  %s-t, --concurrency%s %s<int>%s       Probe worker count [default: 15]\n\n", green, reset, cyan, reset)
+
+		fmt.Printf("%s%sEXPORT & REPORT OPTIONS%s\n", bold, yellow, reset)
+		fmt.Printf("  %s-o, --output%s %s<file>%s           Output report destination path\n", green, reset, cyan, reset)
+		fmt.Printf("  %s-f, --format%s %s<fmt>%s            Export format: html, markdown, json [default: html]\n", green, reset, cyan, reset)
+		fmt.Printf("  %s--no-color%s                       Disable colorized terminal output\n\n", green, reset)
+		fmt.Printf("%s%s%s\n", dim, "Run 'dorkforge -h' for global options.", reset)
+	}
+
+	_ = fs.Parse(args)
+
+	if domainFlag == "" && listFlag == "" {
+		fmt.Fprintf(os.Stderr, "Error: must specify a target with -d <domain> or a target list with -l <file>\n\n")
+		fs.Usage()
+		os.Exit(1)
+	}
+
+	if output.ShouldDisableColor() {
+		noColor = true
+	}
+
+	var minSev models.Severity
+	if minSeverityFlag != "" {
+		parsedSev, err := models.ParseSeverity(minSeverityFlag)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+			os.Exit(1)
+		}
+		minSev = parsedSev
+	}
+
+	reconOpts := recon.ReconOptions{
+		SkipFetch:    noFetch,
+		SkipLive:     noLive,
+		SkipProbe:    noProbe,
+		Categories:   parseCategoryList(categoryFlag),
+		MinSeverity:  minSev,
+		Engines:      parseEngineList(engineFlag),
+		FetchLimit:   fetchLimit,
+		FetchTimeout: time.Duration(fetchTimeout) * time.Second,
+		Concurrency:  concurrency,
+	}
+
+	var targets []string
+	if domainFlag != "" {
+		targets = append(targets, domainFlag)
+	}
+	if listFlag != "" {
+		file, err := os.Open(listFlag)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error reading target list file: %v\n", err)
+			os.Exit(1)
+		}
+		defer file.Close()
+		scanner := bufio.NewScanner(file)
+		for scanner.Scan() {
+			line := strings.TrimSpace(scanner.Text())
+			if line != "" && !strings.HasPrefix(line, "#") {
+				targets = append(targets, line)
+			}
+		}
+	}
+
+	b, r, cyan, green, yellow, dim, red := "", "", "", "", "", "", ""
+	if !noColor {
+		b = cBold
+		r = cReset
+		cyan = cCyan
+		green = cGreen
+		yellow = cYellow
+		dim = cDim
+		red = cRed
+	}
+
+	onPhase := func(phase string, status string) {
+		if status == "started" {
+			fmt.Printf("\n%s[PHASE]%s %s%s%s %s...\n", yellow, r, b, phase, r, dim)
+		} else {
+			fmt.Printf("%s[DONE]%s  %s%s%s\n", green, r, b, phase, r)
+		}
+	}
+
+	ctx := context.Background()
+	for _, target := range targets {
+		fmt.Printf("\n%s=================================================================================%s\n", dim, r)
+		fmt.Printf(" %s%sDORKFORGE FULL RECONNAISSANCE PIPELINE%s\n", b, cyan, r)
+		fmt.Printf(" Target : %s%s%s\n", cyan, target, r)
+		fmt.Printf("%s=================================================================================%s\n", dim, r)
+
+		result, err := recon.RunRecon(ctx, target, reconOpts, onPhase)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error during reconnaissance: %v\n", err)
+			continue
+		}
+
+		fmt.Printf("\n%s=================================================================================%s\n", dim, r)
+		fmt.Printf(" %s%sRECONNAISSANCE SUMMARY%s\n", b, cyan, r)
+		fmt.Printf("%s=================================================================================%s\n", dim, r)
+		fmt.Printf("  Target          : %s%s%s\n", cyan, result.Target, r)
+		fmt.Printf("  Duration        : %s%dms%s\n", green, result.DurationMs, r)
+
+		riskColor := green
+		if result.RiskScore >= 70 {
+			riskColor = red
+		} else if result.RiskScore >= 40 {
+			riskColor = yellow
+		}
+		fmt.Printf("  Risk Score      : %s%d/100%s\n", riskColor, result.RiskScore, r)
+
+		if result.Scan != nil {
+			fmt.Printf("  Total Dorks     : %s%d%s\n", green, result.Scan.TotalDorks, r)
+		}
+		if result.Archive != nil {
+			fmt.Printf("  Archive URLs    : %s%d%s (sensitive: %s%d%s)\n",
+				green, result.Archive.TotalURLs, r, yellow, result.Archive.SensitiveURLs, r)
+		}
+
+		liveCount := 0
+		for _, lf := range result.LiveResults {
+			liveCount += len(lf.Items)
+		}
+		if liveCount > 0 {
+			fmt.Printf("  Live Findings   : %s%d%s URLs extracted from search engines\n", green, liveCount, r)
+		}
+		if len(result.ProbeResults) > 0 {
+			fmt.Printf("  Probed          : %s%d%s endpoints\n", green, len(result.ProbeResults), r)
+			if result.ExposedCount > 0 {
+				fmt.Printf("  Exposed         : %s%d%s endpoints confirmed accessible\n", red, result.ExposedCount, r)
+			}
+		}
+		fmt.Println()
+
+		if outputFlag != "" {
+			if err := recon.WriteReconReport(outputFlag, formatFlag, result); err != nil {
+				fmt.Fprintf(os.Stderr, "Error writing report to %s: %v\n", outputFlag, err)
+			} else {
+				fmt.Printf("Report successfully exported to %s%s%s (format: %s)\n\n", cyan, outputFlag, r, formatFlag)
 			}
 		}
 	}
