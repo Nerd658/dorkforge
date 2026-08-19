@@ -45,6 +45,7 @@ const (
 func printUsage() {
 	noColor := output.ShouldDisableColor()
 	cyan, green, yellow, bold, dim, reset := "", "", "", "", "", ""
+	red, blue, magenta := "", "", ""
 	if !noColor {
 		cyan = cCyan
 		green = cGreen
@@ -52,33 +53,71 @@ func printUsage() {
 		bold = cBold
 		dim = cDim
 		reset = cReset
+		red = cRed
+		blue = cBlue
+		magenta = cMagenta
 	}
 
 	fmt.Printf("%s%s%s\n", cyan, AppBanner, reset)
-	fmt.Printf(" %sVersion:%s %sv%s%s  %s|%s  %sRepository:%s %sgithub.com/Nerd658/dorkforge%s\n\n",
-		dim, reset, bold, Version, reset, dim, reset, dim, reset, cyan, reset)
+	fmt.Printf(" %sVersion:%s %sv%s%s  %s|%s  %sLicense:%s %sMIT%s  %s|%s  %sRepository:%s %sgithub.com/Nerd658/dorkforge%s\n\n",
+		dim, reset, bold, Version, reset, dim, reset, dim, reset, green, reset, dim, reset, dim, reset, cyan, reset)
+
+	fmt.Printf("%s%sABOUT%s\n", bold, yellow, reset)
+	fmt.Printf("  DorkForge is an advanced passive reconnaissance and search engine dorking CLI tool.\n")
+	fmt.Printf("  It synthesizes targeted, high-precision audit queries across 5 search engines inspired by\n")
+	fmt.Printf("  Exploit-DB's Google Hacking Database (GHDB) and modern DevSecOps cloud security benchmarks.\n\n")
 
 	fmt.Printf("%s%sUSAGE%s\n", bold, yellow, reset)
 	fmt.Printf("  dorkforge %s<command>%s [flags]\n\n", green, reset)
 
 	fmt.Printf("%s%sAVAILABLE COMMANDS%s\n", bold, yellow, reset)
-	fmt.Printf("  %s%-14s%s %sExecute passive dorking reconnaissance on target domain(s)%s\n", green, "scan", reset, dim, reset)
-	fmt.Printf("  %s%-14s%s %sGenerate negative exclusion queries for subdomain discovery%s\n", green, "subdomains", reset, dim, reset)
-	fmt.Printf("  %s%-14s%s %sDisplay built-in signatures catalog with filters%s\n", green, "list", reset, dim, reset)
-	fmt.Printf("  %s%-14s%s %sList all 12 supported audit categories and risk ratings%s\n", green, "categories", reset, dim, reset)
+	fmt.Printf("  %s%-14s%s %sExecute passive dorking reconnaissance on single or multiple targets%s\n", green, "scan", reset, dim, reset)
+	fmt.Printf("  %s%-14s%s %sGenerate negative exclusion search chains for subdomain discovery%s\n", green, "subdomains", reset, dim, reset)
+	fmt.Printf("  %s%-14s%s %sInspect built-in signatures catalog with category and keyword filters%s\n", green, "list", reset, dim, reset)
+	fmt.Printf("  %s%-14s%s %sList all 12 audit categories, risk severities, and descriptions%s\n", green, "categories", reset, dim, reset)
 	fmt.Printf("  %s%-14s%s %sGenerate shell autocompletion scripts (bash, zsh, fish)%s\n", green, "completion", reset, dim, reset)
-	fmt.Printf("  %s%-14s%s %sDisplay version information%s\n", green, "version", reset, dim, reset)
+	fmt.Printf("  %s%-14s%s %sDisplay version and build information%s\n", green, "version", reset, dim, reset)
 
-	fmt.Printf("\n%s%sQUICK START EXAMPLES%s\n", bold, yellow, reset)
-	fmt.Printf("  %s# 1. Audit critical configs and secrets for a domain%s\n", dim, reset)
-	fmt.Printf("  dorkforge scan -d %sexample.com%s -c %sconfigs,secrets%s -s %shigh%s\n\n", cyan, reset, green, reset, cRed, reset)
-	fmt.Printf("  %s# 2. Export full Markdown audit report and HTML dashboard%s\n", dim, reset)
-	fmt.Printf("  dorkforge scan -d %sexample.com%s -o %saudit.md%s -f %smarkdown%s\n", cyan, reset, yellow, reset, green, reset)
-	fmt.Printf("  dorkforge scan -d %sexample.com%s -o %sdashboard.html%s -f %shtml%s\n\n", cyan, reset, yellow, reset, green, reset)
-	fmt.Printf("  %s# 3. Discover unmapped subdomains with negative search operators%s\n", dim, reset)
-	fmt.Printf("  dorkforge subdomains -d %sexample.com%s --exclude %smail,blog,app%s\n\n", cyan, reset, yellow, reset)
+	fmt.Printf("\n%s%sSUPPORTED SEARCH ENGINES (-e, --engine)%s\n", bold, yellow, reset)
+	fmt.Printf("  %s%-12s%s Google Search (GHDB operators: site, inurl, intitle, ext, filetype)\n", cyan, "google", reset)
+	fmt.Printf("  %s%-12s%s GitHub Code Search (API tokens, repo secrets, commit disclosures)\n", cyan, "github", reset)
+	fmt.Printf("  %s%-12s%s DuckDuckGo (Non-personalized index & unranked parameter listings)\n", cyan, "duckduckgo", reset)
+	fmt.Printf("  %s%-12s%s Bing (Subdomain discovery, IP hosting, unlinked document indexing)\n", cyan, "bing", reset)
+	fmt.Printf("  %s%-12s%s Shodan (Internet-facing host fingerprints & SSL certificate SANs)\n", cyan, "shodan", reset)
 
-	fmt.Printf("%sRun 'dorkforge <command> -h' for detailed flags and options.%s\n\n", dim, reset)
+	fmt.Printf("\n%s%sSUPPORTED EXPORT FORMATS (-f, --format)%s\n", bold, yellow, reset)
+	fmt.Printf("  %s%-12s%s Formatted Markdown audit deliverable with remediation tables (default)\n", magenta, "markdown", reset)
+	fmt.Printf("  %s%-12s%s Interactive HTML web dashboard with live search, filters & quick launch\n", magenta, "html", reset)
+	fmt.Printf("  %s%-12s%s Structured JSON report for CI/CD integration and automated ingestion\n", magenta, "json", reset)
+	fmt.Printf("  %s%-12s%s Plaintext newline-delimited list of encoded search URLs\n", magenta, "urls", reset)
+
+	fmt.Printf("\n%s%sPRACTICAL WORKFLOW EXAMPLES%s\n", bold, yellow, reset)
+	fmt.Printf("  %s# 1. Quick triage: Audit critical configs and credentials%s\n", dim, reset)
+	fmt.Printf("  dorkforge scan -d %sexample.com%s -c %sconfigs,secrets%s -s %shigh%s\n\n", cyan, reset, green, reset, red, reset)
+
+	fmt.Printf("  %s# 2. Comprehensive cloud audit: Firebase, S3, Azure Blob, Notion, Drive%s\n", dim, reset)
+	fmt.Printf("  dorkforge scan -d %sexample.com%s -c %scloud,backups,source-code%s\n\n", cyan, reset, green, reset)
+
+	fmt.Printf("  %s# 3. Export interactive HTML dashboard + Markdown report%s\n", dim, reset)
+	fmt.Printf("  dorkforge scan -d %sexample.com%s -o %sdashboard.html%s -f %shtml%s\n", cyan, reset, yellow, reset, magenta, reset)
+	fmt.Printf("  dorkforge scan -d %sexample.com%s -o %saudit-report.md%s -f %smarkdown%s\n\n", cyan, reset, yellow, reset, magenta, reset)
+
+	fmt.Printf("  %s# 4. Multi-target batch reconnaissance with custom dorks%s\n", dim, reset)
+	fmt.Printf("  dorkforge scan -l %stargets.txt%s -s %smedium%s --custom %s./my-rules.json%s -o %srecon.json%s -f %sjson%s\n\n",
+		cyan, reset, blue, reset, green, reset, yellow, reset, magenta, reset)
+
+	fmt.Printf("  %s# 5. Passive subdomain expansion excluding known hosts%s\n", dim, reset)
+	fmt.Printf("  dorkforge subdomains -d %sexample.com%s --exclude %smail,blog,vpn,api,dev%s\n\n", cyan, reset, yellow, reset)
+
+	fmt.Printf("  %s# 6. Rate-limited browser opening (avoids anti-bot CAPTCHAs)%s\n", dim, reset)
+	fmt.Printf("  dorkforge scan -d %sexample.com%s -c %sadmin,api-endpoints%s --open --batch-size %s3%s --delay %s2500%s\n\n",
+		cyan, reset, green, reset, cyan, reset, cyan, reset)
+
+	fmt.Printf("%s%sENVIRONMENT VARIABLES%s\n", bold, yellow, reset)
+	fmt.Printf("  %sNO_COLOR=1%s              Disable ANSI color codes in terminal output\n", green, reset)
+	fmt.Printf("  %sDORKFORGE_NO_COLOR=1%s    Alternative flag to force monochrome terminal display\n\n", green, reset)
+
+	fmt.Printf("%sRun 'dorkforge <command> -h' for command-specific flags and parameters.%s\n\n", dim, reset)
 }
 
 func main() {
