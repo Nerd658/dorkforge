@@ -1,14 +1,13 @@
-[2026-08-19] — Update Documentation and Interactive Academy with Recon Pipeline and UI Enhancements
+[2026-08-19] — Document Browser Popup Blocker Authorization in README.md
 
 What changed:
-- Updated 'docs/TUTORIAL_INTERACTIF.md' with Lab 7 ("Full Automated Reconnaissance Pipeline dfg recon").
-- Updated 'docs/tutorial.html' (Interactive Web Academy) with Lab 7 card and command references.
-- Documented 'dfg recon' flag combinations (--no-live, --no-probe, --open), HTML report "Launch All" buttons, and batching parameters.
+- Added browser popup blocker notice to README.md under HTML Dashboard and Browser Launching sections.
+- Documented how to authorize multi-tab opening in browser address bars for HTML reports.
+- Highlighted CLI '--open' flag as a system-level popup blocker bypass mechanism.
 
 Why:
-- Ensure all technical documentation, hands-on labs, and interactive web tutorials accurately reflect the new automated pipeline and UI features.
+- Inform users and security auditors on how to handle browser pop-up restrictions when utilizing multi-tab launch buttons in exported reports.
 
 Files affected:
-- docs/TUTORIAL_INTERACTIF.md — Added Lab 7 and updated dfg command aliases
-- docs/tutorial.html — Added Lab 7 card to web academy
+- README.md — Added pop-up blocker usage note
 - commit.txt — Updated release notes

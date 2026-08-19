@@ -118,12 +118,14 @@ Export findings directly to a formatted Markdown audit report, interactive HTML 
 # Markdown Report
 dfg scan -d example.com -o audit-report.md -f markdown
 
-# Interactive HTML Dashboard
+# Interactive HTML Dashboard (includes "Launch All Dorks" multi-tab button)
 dfg scan -d example.com -o dashboard.html -f html
 
 # JSON Export
 dfg scan -d example.com -o dorks.json -f json
 ```
+
+> **Note on Browser Popup Blockers**: When clicking the "Launch All Visible Dorks" button in exported HTML dashboards, modern browsers (Chrome, Firefox, Safari, Edge) will block opening multiple simultaneous tabs on the first attempt. Click the "Pop-up blocked" icon in your browser address bar and select **"Always allow pop-ups for this site/file"** to authorize full multi-tab launching.
 
 ### 6. Subdomain Discovery
 Generate negative search engine queries excluding known subdomains:
@@ -133,7 +135,7 @@ dfg subdomains -d example.com --exclude mail,blog,dev,vpn
 ```
 
 ### 7. Safe Browser Launching
-Open generated queries in your default browser in controlled batches:
+Open generated queries in your default browser in controlled batches directly from the terminal (bypasses browser popup blockers via system calls):
 
 ```bash
 dfg scan -d example.com -c configs,admin --open --batch-size 3 --delay 2000
