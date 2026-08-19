@@ -1,0 +1,39 @@
+[2026-08-19] — Initial release of dorkforge CLI tool
+
+What changed:
+- Implemented modular CLI dorking & passive reconnaissance tool in Go.
+- Added comprehensive 12-category dork catalog (configs, secrets, admin, backups, cloud, source-code, errors, docs, api-endpoints, subdomains, network-iot, employees-osint).
+- Built multi-engine search URL adapters (Google, GitHub Code Search, DuckDuckGo, Bing, Shodan).
+- Added multi-format export capabilities (Markdown audit reports, JSON dataset, interactive HTML dashboard, and URL list).
+- Implemented subdomain exclusion chain query builder.
+- Added safe cross-platform browser opening with configurable batch sizes and delays.
+- Included full unit test suite, Makefile, and GitHub Actions CI workflow.
+
+Why:
+- Provide security auditors, DevSecOps engineers, and penetration testers with an automated, lightweight, and structured tool for external exposure assessments without sending active intrusive payloads.
+
+Files affected:
+- cmd/dorkforge/main.go — CLI entrypoint, argument parsing, command handlers
+- internal/models/dork.go — Core domain types for dorks, categories, engines, and summaries
+- internal/models/dork_test.go — Unit tests for severity, categories, and models
+- internal/dorks/catalog.go — Embedded signature database across 12 categories
+- internal/dorks/custom.go — Custom JSON signature file loader
+- internal/engine/builder.go — Target sanitization, query rendering, and engine URL builders
+- internal/engine/builder_test.go — Unit tests for sanitization, rendering, and URL generation
+- internal/output/console.go — Terminal renderer with colorized ANSI output
+- internal/output/exporter.go — Exporters for Markdown, HTML dashboard, JSON, and URLs
+- internal/output/exporter_test.go — Exporter unit tests
+- internal/browser/opener.go — Safe browser opening with batching controls
+- internal/subdomains/enum.go — Negative exclusion query generator for subdomains
+- internal/subdomains/enum_test.go — Subdomain query builder tests
+- .github/workflows/ci.yml — Automated CI workflow
+- Makefile — Build and test automation
+- .gitignore — Ignore binaries, reports, and IDE artifacts
+- README.md — Comprehensive project documentation and usage examples
+
+Breaking changes:
+- None
+
+Notes for review:
+- Verify that Go 1.22+ is used to compile.
+- Test browser opening on local desktop environments with 'dorkforge scan -d <target> --open'.
