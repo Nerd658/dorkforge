@@ -1067,6 +1067,21 @@
                     <p>Full automated 4-phase pipeline (dorks + archives + live scraping + HTTP probing) with multi-tab dashboard.</p>
                     <code style="font-size: 11px;">dfg recon -d target.com -o audit.html -f html</code>
                 </div>
+                <div class="card">
+                    <div class="card-title" style="margin-bottom: 8px;">Lab 8: False Positive Noise Filter</div>
+                    <p>Filtering out known non-issues, categories, or URLs with .dfgignore rules files.</p>
+                    <code style="font-size: 11px;">dfg scan -d target.com --ignore .dfgignore</code>
+                </div>
+                <div class="card">
+                    <div class="card-title" style="margin-bottom: 8px;">Lab 9: Continuous Delta Audits</div>
+                    <p>Comparing current scan findings against a previous baseline JSON to isolate new findings.</p>
+                    <code style="font-size: 11px;">dfg scan -d target.com --diff baseline.json</code>
+                </div>
+                <div class="card">
+                    <div class="card-title" style="margin-bottom: 8px;">Lab 10: CIDR & ASN Dorking</div>
+                    <p>Auditing entire IP subnets or ASNs with automatic Shodan and Bing query adaptation.</p>
+                    <code style="font-size: 11px;">dfg scan -d 198.51.100.0/24 -e shodan</code>
+                </div>
             </div>
         </section>
 
