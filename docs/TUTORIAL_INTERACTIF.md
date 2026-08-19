@@ -605,6 +605,71 @@ Run the complete all-in-one pipeline and export an interactive dashboard:
 
 ---
 
+## Lab 8: False-Positive Noise Reduction (`.dfgignore`)
+
+### Context & Threat Scenario
+Security audits against large enterprises frequently uncover known, authorized public resources (e.g. intentional public sitemaps, developer documentation). Without exclusion rules, these known items appear in every audit report, wasting analyst triage time.
+
+### Rules Engine Syntax
+Create a `.dfgignore` file in your workspace:
+
+```text
+# Ignore a specific dork signature by ID
+dork_id: google-s3-public-bucket
+
+# Ignore an entire category
+category: employees-osint
+
+# Ignore URL patterns matching sitemaps or documentation
+url: *known-sitemap.xml*
+url: *public-apidocs*
+```
+
+### Terminal Commands
+```bash
+# Execute scan applying exclusion rules
+./bin/dorkforge scan -d example.com --ignore .dfgignore -o clean-audit.html -f html
+```
+
+---
+
+## Lab 9: Continuous Audit Delta Comparison (`--diff`)
+
+### Context & Threat Scenario
+In a DevSecOps environment, running weekly dorking audits generates hundreds of data points. Security engineers require a delta view showing only newly introduced exposures since the last audit baseline.
+
+### Workflow Execution
+```bash
+# Step 1: Export baseline audit JSON
+./bin/dorkforge scan -d example.com -o baseline.json -f json
+
+# Step 2: One week later, run scan with --diff against baseline
+./bin/dorkforge scan -d example.com --diff baseline.json -o weekly-delta.html -f html
+```
+
+### Terminal Delta Output
+```text
+[DIFF REPORT] New Signatures Matched: 2 | Resolved Signatures: 1
+```
+
+---
+
+## Lab 10: CIDR Subnet & ASN Infrastructure Dorking
+
+### Context & Threat Scenario
+Red teams and auditors frequently target entire IP ranges (CIDR blocks) or Autonomous System Numbers (ASNs) rather than single domain names.
+
+### Terminal Commands
+```bash
+# Audit an IPv4 CIDR range on Shodan (converts target to net:"198.51.100.0/24")
+./bin/dorkforge scan -d 198.51.100.0/24 -e shodan
+
+# Audit an ASN on Shodan (converts target to asn:"AS15169")
+./bin/dorkforge scan -d AS15169 -e shodan
+```
+
+---
+
 # Module 4: Defensive Remediation Playbooks
 
 Identifying exposures is only half the battle. A security engineer must provide clear, actionable configuration fixes.
