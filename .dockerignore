@@ -1,0 +1,11 @@
+.git
+.github
+bin/
+reports/
+*.md
+docs/
+.gemini
+tmp/
+*.log
+*.png
+*.jpg

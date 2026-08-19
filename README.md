@@ -50,6 +50,19 @@ make install
 go install github.com/Nerd658/dorkforge/cmd/dorkforge@latest
 ```
 
+### Run with Docker / Docker Compose
+
+```bash
+# Build the container image
+docker compose build
+
+# Run reconnaissance scan and save HTML report locally in ./reports
+docker compose run --rm dorkforge scan -d example.com -o /app/reports/audit.html -f html
+
+# Mine historical archive URLs
+docker compose run --rm dorkforge fetch -d example.com --subs --sensitive-only -o /app/reports/urls.txt
+```
+
 ---
 
 ## Usage Guide

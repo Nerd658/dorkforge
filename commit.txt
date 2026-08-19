@@ -1,24 +1,25 @@
-[2026-08-19] — Update CLI Shortcut Alias from df to dfg to Prevent Unix Coreutils Collision
+[2026-08-19] — Add Container Support with Multi-Stage Dockerfile and Docker Compose Configuration
 
 What changed:
-- Changed default build symlink and CLI shortcut alias from 'df' to 'dfg' across Makefile, shell completions, README.md, and interactive tutorials.
-- Updated shell autocompletion generator (Bash, Zsh, Fish) in internal/completion/completion.go to register both 'dorkforge' and 'dfg'.
-- Cleaned up any existing 'bin/df' symlink on build.
+- Added multi-stage 'Dockerfile' compiling static Go binary with stripped debug symbols (-ldflags="-s -w" -trimpath) on Alpine Linux runtime.
+- Added non-root unprivileged execution user (appuser:10001) with ca-certificates and tzdata.
+- Added 'docker-compose.yml' mapping local './reports' and './targets' volume mounts.
+- Added '.dockerignore' to keep the build context lightweight and fast.
+- Updated 'README.md' with Docker and Docker Compose build/run instructions.
 
 Why:
-- 'df' (disk free) is a standard POSIX / GNU coreutils command present on every Unix and Linux distribution. Aliasing or installing 'df' in PATH conflicts with standard system administration tooling. 'dfg' (DorkForGe) provides a collision-free, memorable shorthand.
+- Enable seamless containerized execution in isolated environments, container orchestration, and CI/CD pipelines without requiring local Go toolchain installation.
 
 Files affected:
-- Makefile — Updated ALIAS_NAME to dfg and updated build/install targets
-- internal/completion/completion.go — Registered dfg in Bash, Zsh, and Fish completion scripts
-- README.md — Updated quickstart examples and installation paths
-- docs/TUTORIAL_INTERACTIF.md — Updated hands-on lab commands
-- docs/tutorial.html — Updated interactive terminal copy commands
+- Dockerfile — Multi-stage Alpine container build definition
+- docker-compose.yml — Compose service and volume definitions
+- .dockerignore — Build context exclusion rules
+- README.md — Container usage documentation
 - commit.txt — Updated release notes
 
 Breaking changes:
-- 'bin/df' symlink is replaced by 'bin/dfg'.
+- None
 
 Notes for review:
-- Test: 'make build && ./bin/dfg scan -d example.com'
-- Verify completion: 'source <(./bin/dfg completion bash)'
+- Build image: 'docker compose build'
+- Test scan: 'docker compose run --rm dorkforge scan -d example.com'

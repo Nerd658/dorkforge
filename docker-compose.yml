@@ -1,0 +1,17 @@
+services:
+  dorkforge:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: dorkforge:latest
+    container_name: dorkforge
+    stdin_open: true
+    tty: true
+    volumes:
+      - ./reports:/app/reports
+      - ./targets:/app/targets
+    environment:
+      - NO_COLOR=0
+    # Default execution shows help, override by passing arguments:
+    # Example: docker compose run --rm dorkforge scan -d example.com -o /app/reports/audit.html -f html
+    command: ["--help"]
