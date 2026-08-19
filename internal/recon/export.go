@@ -536,6 +536,9 @@ function filterDivs(containerId, inputId) {
 		} else {
 			items[i].style.display = "none";
 		}
+	}
+}
+
 function launchAllDorks() {
 	const table = document.getElementById("dorks-table");
 	const tr = table.getElementsByTagName("tr");
