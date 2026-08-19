@@ -14,10 +14,10 @@
 - [Module 3: Hands-on Labs & Scenarios with DorkForge](#module-3-hands-on-labs--scenarios-with-dorkforge)
   - [Lab 1: Cloud & SaaS Footprinting (S3, Firebase, Notion, Drive)](#lab-1-cloud--saas-footprinting)
   - [Lab 2: Leaked Credentials & API Tokens Triage (OpenAI, Stripe, AWS, Slack)](#lab-2-leaked-credentials--api-tokens-triage)
-  - [Lab 3: Subdomain Discovery via Negative Operators (`df subdomains`)](#lab-3-subdomain-discovery-via-negative-operators)
-  - [Lab 4: Mining Historical Web Archives (`df fetch`)](#lab-4-mining-historical-web-archives)
-  - [Lab 5: Real-time Search Result Scraping (`df scan --live`)](#lab-5-real-time-search-result-scraping)
-  - [Lab 6: HTTP Status Verification & Non-Intrusive Validation (`df probe`)](#lab-6-http-status-verification--non-intrusive-validation)
+  - [Lab 3: Subdomain Discovery via Negative Operators (`dfg subdomains`)](#lab-3-subdomain-discovery-via-negative-operators)
+  - [Lab 4: Mining Historical Web Archives (`dfg fetch`)](#lab-4-mining-historical-web-archives)
+  - [Lab 5: Real-time Search Result Scraping (`dfg scan --live`)](#lab-5-real-time-search-result-scraping)
+  - [Lab 6: HTTP Status Verification & Non-Intrusive Validation (`dfg probe`)](#lab-6-http-status-verification--non-intrusive-validation)
 - [Module 4: Defensive Remediation Playbooks](#module-4-defensive-remediation-playbooks)
 - [Module 5: Interactive Cheatsheet and CLI Quick Reference](#module-5-interactive-cheatsheet-and-cli-quick-reference)
 
@@ -704,12 +704,12 @@ repos:
 
 | Subcommand | Key Flags | Description |
 |---|---|---|
-| `df scan -d <domain>` | `-c <cats>`, `-s <sev>`, `-e <engine>`, `-o <file>`, `-f <fmt>`, `--open` | Primary passive dorking reconnaissance engine. |
-| `df subdomains -d <domain>` | `--exclude <list>`, `-o <file>`, `-f <fmt>`, `--open` | Synthesizes negative search exclusion chains for subdomain discovery. |
-| `df list` | `-c <cat>`, `--custom <file.json>` | Lists all 70+ built-in and custom dork signatures. |
-| `df categories` | None | Displays descriptions and severities for all 12 categories. |
-| `df completion <shell>` | `bash`, `zsh`, `fish` | Generates fast shell autocompletion scripts. |
-| `df version` | None | Displays version, Go build toolchain, and architecture. |
+| `dfg scan -d <domain>` | `-c <cats>`, `-s <sev>`, `-e <engine>`, `-o <file>`, `-f <fmt>`, `--open` | Primary passive dorking reconnaissance engine. |
+| `dfg subdomains -d <domain>` | `--exclude <list>`, `-o <file>`, `-f <fmt>`, `--open` | Synthesizes negative search exclusion chains for subdomain discovery. |
+| `dfg list` | `-c <cat>`, `--custom <file.json>` | Lists all 70+ built-in and custom dork signatures. |
+| `dfg categories` | None | Displays descriptions and severities for all 12 categories. |
+| `dfg completion <shell>` | `bash`, `zsh`, `fish` | Generates fast shell autocompletion scripts. |
+| `dfg version` | None | Displays version, Go build toolchain, and architecture. |
 
 ## 5.2 Category Reference Matrix
 

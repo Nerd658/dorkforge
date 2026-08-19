@@ -1,38 +1,24 @@
-[2026-08-19] — Implement Archive Fetcher, Live Search Scraper, Active HTTP Prober, and Interactive Training Course
+[2026-08-19] — Update CLI Shortcut Alias from df to dfg to Prevent Unix Coreutils Collision
 
 What changed:
-- Added 'fetch' command (internal/fetcher) integrating Wayback Machine CDX and AlienVault OTX APIs for passive historical URL discovery, classification, and sensitive asset filtering.
-- Added 'probe' command (internal/prober) for concurrent active HTTP endpoint validation (200 OK, 403 Forbidden, 401 Unauthorized) across critical paths (.env, .git, /actuator/env, Swagger, SQL dumps).
-- Added '--live' flag on 'scan' command (internal/scraper) providing real-time DuckDuckGo HTML search results extraction without external dependencies.
-- Added interactive training course and hands-on lab manual in docs/TUTORIAL_INTERACTIF.md and interactive HTML academy in docs/tutorial.html.
-- Added 'bin/df' alias and symlink generation in Makefile.
-- Updated CLI command routing and help screens in cmd/dorkforge/main.go.
+- Changed default build symlink and CLI shortcut alias from 'df' to 'dfg' across Makefile, shell completions, README.md, and interactive tutorials.
+- Updated shell autocompletion generator (Bash, Zsh, Fish) in internal/completion/completion.go to register both 'dorkforge' and 'dfg'.
+- Cleaned up any existing 'bin/df' symlink on build.
 
 Why:
-- Expand DorkForge from a passive query synthesis engine into a comprehensive attack surface assessment and reconnaissance suite with passive archive mining, live search scraping, active status probing, and complete educational documentation.
+- 'df' (disk free) is a standard POSIX / GNU coreutils command present on every Unix and Linux distribution. Aliasing or installing 'df' in PATH conflicts with standard system administration tooling. 'dfg' (DorkForGe) provides a collision-free, memorable shorthand.
 
 Files affected:
-- cmd/dorkforge/main.go — Added fetch and probe commands, integrated --live and --probe flags
-- internal/fetcher/fetcher.go — Historical archive URL aggregator and sensitive classifier
-- internal/fetcher/wayback.go — Wayback Machine CDX API client
-- internal/fetcher/alienvault.go — AlienVault OTX API client
-- internal/fetcher/fetcher_test.go — Fetcher unit test suite with mock servers
-- internal/prober/prober.go — Active HTTP concurrent endpoint prober and heuristic analyzer
-- internal/prober/prober_test.go — Prober unit test suite with mock servers
-- internal/scraper/scraper.go — Scraper domain models and interfaces
-- internal/scraper/duckduckgo.go — DuckDuckGo HTML search result parser
-- internal/scraper/scraper_test.go — Scraper unit test suite with mock HTML
-- docs/TUTORIAL_INTERACTIF.md — Complete interactive course and lab manual
-- docs/tutorial.html — Interactive single-page web academy
-- Makefile — Added df symlink generation upon build
-- README.md — Updated feature matrix and usage examples
+- Makefile — Updated ALIAS_NAME to dfg and updated build/install targets
+- internal/completion/completion.go — Registered dfg in Bash, Zsh, and Fish completion scripts
+- README.md — Updated quickstart examples and installation paths
+- docs/TUTORIAL_INTERACTIF.md — Updated hands-on lab commands
+- docs/tutorial.html — Updated interactive terminal copy commands
 - commit.txt — Updated release notes
 
 Breaking changes:
-- None
+- 'bin/df' symlink is replaced by 'bin/dfg'.
 
 Notes for review:
-- Test passive fetch: './bin/df fetch -d example.com --subs --sensitive-only'
-- Test live search: './bin/df scan -d example.com -c configs --live'
-- Test active probe: './bin/df probe -d example.com -c configs,secrets'
-- Open interactive academy: 'xdg-open docs/tutorial.html'
+- Test: 'make build && ./bin/dfg scan -d example.com'
+- Verify completion: 'source <(./bin/dfg completion bash)'

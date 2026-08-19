@@ -882,7 +882,7 @@
                             </tr>
                             <tr>
                                 <td><strong>DuckDuckGo</strong></td>
-                                <td><code>site:target.com filetype:pdf "confidential"</code></td>
+                                <td><code>site:target.com filetype:pdfg "confidential"</code></td>
                                 <td>Delivers non-personalized search results without localized search bubble distortion.</td>
                             </tr>
                         </tbody>
@@ -932,7 +932,7 @@
                 <div class="sim-output">
                     <div class="sim-output-line">
                         <span class="sim-output-label">CLI Command:</span>
-                        <span class="sim-output-val cmd" id="simCli">df scan -d example.com -c configs -e google</span>
+                        <span class="sim-output-val cmd" id="simCli">dfg scan -d example.com -c configs -e google</span>
                     </div>
                     <div class="sim-output-line">
                         <span class="sim-output-label">Raw Dork:</span>
@@ -970,10 +970,10 @@
                     <div class="terminal-bar">
                         <div class="terminal-dots"><div class="dot dot-red"></div><div class="dot dot-yellow"></div><div class="dot dot-green"></div></div>
                         <div class="terminal-title">bash — dorkforge scan -c cloud</div>
-                        <button class="terminal-copy-btn" onclick="copyText('df scan -d megacorp-logistics.com -c cloud -f markdown -o cloud-audit.md')">Copy</button>
+                        <button class="terminal-copy-btn" onclick="copyText('dfg scan -d megacorp-logistics.com -c cloud -f markdown -o cloud-audit.md')">Copy</button>
                     </div>
                     <div class="terminal-body">
-<span class="cmd">$ df scan -d megacorp-logistics.com -c cloud -f markdown -o cloud-audit.md</span>
+<span class="cmd">$ dfg scan -d megacorp-logistics.com -c cloud -f markdown -o cloud-audit.md</span>
 
 <span class="out-dim">================================================================================</span>
 <span class="out-dim"> DORKFORGE RECONNAISSANCE AUDIT | Target: megacorp-logistics.com</span>
@@ -1003,10 +1003,10 @@
                     <div class="terminal-bar">
                         <div class="terminal-dots"><div class="dot dot-red"></div><div class="dot dot-yellow"></div><div class="dot dot-green"></div></div>
                         <div class="terminal-title">bash — dorkforge scan -c secrets,configs</div>
-                        <button class="terminal-copy-btn" onclick="copyText('df scan -d fintech-payments.io -c configs,secrets -s high')">Copy</button>
+                        <button class="terminal-copy-btn" onclick="copyText('dfg scan -d fintech-payments.io -c configs,secrets -s high')">Copy</button>
                     </div>
                     <div class="terminal-body">
-<span class="cmd">$ df scan -d fintech-payments.io -c configs,secrets -s high</span>
+<span class="cmd">$ dfg scan -d fintech-payments.io -c configs,secrets -s high</span>
 
 01. <span class="out-crit">[CRITICAL]</span> OpenAI and LLM API Key Leaks (secrets / github)
     Query      : "fintech-payments.io" AND ("sk-proj-" OR "sk-live-" OR "OPENAI_API_KEY")
@@ -1023,7 +1023,7 @@
             <!-- Lab 3 -->
             <div class="card" style="margin-bottom: 20px;">
                 <div class="card-header">
-                    <div class="card-title">Lab 3: Subdomain Discovery via Negative Exclusion Chains (df subdomains)</div>
+                    <div class="card-title">Lab 3: Subdomain Discovery via Negative Exclusion Chains (dfg subdomains)</div>
                     <span class="badge badge-med">OSINT</span>
                 </div>
                 <p>Peeling back domain hierarchy layers using mathematical set exclusion: <code>site:*.target.com -site:www.target.com -site:mail.target.com...</code></p>
@@ -1031,10 +1031,10 @@
                     <div class="terminal-bar">
                         <div class="terminal-dots"><div class="dot dot-red"></div><div class="dot dot-yellow"></div><div class="dot dot-green"></div></div>
                         <div class="terminal-title">bash — dorkforge subdomains</div>
-                        <button class="terminal-copy-btn" onclick="copyText('df subdomains -d healthcare-corp.org --exclude www,mail,blog,portal,app')">Copy</button>
+                        <button class="terminal-copy-btn" onclick="copyText('dfg subdomains -d healthcare-corp.org --exclude www,mail,blog,portal,app')">Copy</button>
                     </div>
                     <div class="terminal-body">
-<span class="cmd">$ df subdomains -d healthcare-corp.org --exclude www,mail,blog,portal,app</span>
+<span class="cmd">$ dfg subdomains -d healthcare-corp.org --exclude www,mail,blog,portal,app</span>
 
 01. <span class="out-med">[LOW]</span> Google Subdomain Exclusion Query (subdomains / google)
     Query      : site:*.healthcare-corp.org -site:www.healthcare-corp.org -site:healthcare-corp.org -site:mail.healthcare-corp.org -site:blog.healthcare-corp.org -site:portal.healthcare-corp.org -site:app.healthcare-corp.org
@@ -1055,7 +1055,7 @@
                 <div class="card">
                     <div class="card-title" style="margin-bottom: 8px;">Lab 5: Real-time Scraping</div>
                     <p>Safe batching and jitter delay configuration to prevent Google and Bing anti-bot reCAPTCHA blocks.</p>
-                    <code style="font-size: 11px;">df scan -d target.com --open --batch-size 3 --delay 2500</code>
+                    <code style="font-size: 11px;">dfg scan -d target.com --open --batch-size 3 --delay 2500</code>
                 </div>
                 <div class="card">
                     <div class="card-title" style="margin-bottom: 8px;">Lab 6: HTTP Status Probing</div>
@@ -1309,7 +1309,7 @@ location /admin/ {
             const tpl = (templates[cat] && templates[cat][engine]) ? templates[cat][engine] : templates.configs.google;
             const rendered = tpl.replace(/{{TARGET}}/g, target);
 
-            document.getElementById('simCli').innerText = `df scan -d ${target} -c ${cat} -e ${engine}`;
+            document.getElementById('simCli').innerText = `dfg scan -d ${target} -c ${cat} -e ${engine}`;
             document.getElementById('simRawQuery').innerText = rendered;
 
             let searchUrl = '';

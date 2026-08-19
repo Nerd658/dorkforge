@@ -1,4 +1,4 @@
-# dorkforge (df)
+# dorkforge (dfg)
 
 `dorkforge` is a high-performance, modular Command-Line Interface (CLI) tool written in Go for automated search engine dorking, passive reconnaissance, historical archive mining, live search results scraping, and attack surface exposure assessment.
 
@@ -25,7 +25,7 @@ It generates structured, targeted queries across major search providers (Google,
 - **Live Search Results Extraction (`scan --live`)**: Built-in DuckDuckGo HTML parser that queries search engines in the background and prints real target URLs directly in the terminal.
 - **Active Endpoint Probing (`probe` & `scan --probe`)**: High-throughput concurrent HTTP prober to test live status codes (`200 OK`, `403 Forbidden`, `401 Unauthorized`) of critical paths.
 - **Multi-Engine Adapters**: Native query synthesis and URL generation for **Google**, **GitHub Code Search**, **DuckDuckGo**, **Bing**, and **Shodan**.
-- **Shell Autocompletion & Short Alias**: Built-in autocompletion generator for **Bash**, **Zsh**, and **Fish**, plus automatic `./bin/df` shortcut generation.
+- **Shell Autocompletion & Short Alias**: Built-in autocompletion generator for **Bash**, **Zsh**, and **Fish**, plus automatic `./bin/dfg` shortcut generation.
 - **Interactive Training Academy**: Complete hands-on course in [docs/TUTORIAL_INTERACTIF.md](docs/TUTORIAL_INTERACTIF.md) and interactive single-page web app in [docs/tutorial.html](docs/tutorial.html).
 - **Zero External Dependencies**: Built strictly with standard Go libraries and ANSI formatting for fast, self-contained single binaries.
 
@@ -39,7 +39,7 @@ It generates structured, targeted queries across major search providers (Google,
 git clone https://github.com/Nerd658/dorkforge.git
 cd dorkforge
 make build
-# Binaries placed in ./bin/dorkforge and symlink ./bin/df
+# Binaries placed in ./bin/dorkforge and symlink ./bin/dfg
 ```
 
 ### Install to System
@@ -59,17 +59,17 @@ Scan a domain across all default categories or target specific high-risk assets:
 
 ```bash
 # General scan
-df scan -d example.com
+dfg scan -d example.com
 
 # Critical configs and leaked credentials
-df scan -d example.com -c configs,secrets -s high
+dfg scan -d example.com -c configs,secrets -s high
 ```
 
 ### 2. Live Search Results Scraping (`--live`)
 Extract real target links indexed by search engines directly into your terminal without opening a browser:
 
 ```bash
-df scan -d example.com -c configs,secrets --live
+dfg scan -d example.com -c configs,secrets --live
 ```
 
 ### 3. Historical Web Archive Mining (`fetch`)
@@ -77,14 +77,14 @@ Passively extract all known URLs ever indexed on the target domain from Wayback 
 
 ```bash
 # Mining sensitive assets across all subdomains
-df fetch -d example.com --subs --sensitive-only -o archive_urls.txt
+dfg fetch -d example.com --subs --sensitive-only -o archive_urls.txt
 ```
 
 ### 4. Active Endpoint Probing (`probe`)
 Concurrently test whether critical endpoints (`/.env`, `/.git/HEAD`, `/actuator/env`, `/swagger.json`) respond `200 OK` on the target server:
 
 ```bash
-df probe -d example.com -t 20 -o live_audit.html -f html
+dfg probe -d example.com -t 20 -o live_audit.html -f html
 ```
 
 ### 5. Generate Reports (Markdown, HTML, JSON)
@@ -92,27 +92,27 @@ Export findings directly to a formatted Markdown audit report, interactive HTML 
 
 ```bash
 # Markdown Report
-df scan -d example.com -o audit-report.md -f markdown
+dfg scan -d example.com -o audit-report.md -f markdown
 
 # Interactive HTML Dashboard
-df scan -d example.com -o dashboard.html -f html
+dfg scan -d example.com -o dashboard.html -f html
 
 # JSON Export
-df scan -d example.com -o dorks.json -f json
+dfg scan -d example.com -o dorks.json -f json
 ```
 
 ### 6. Subdomain Discovery
 Generate negative search engine queries excluding known subdomains:
 
 ```bash
-df subdomains -d example.com --exclude mail,blog,dev,vpn
+dfg subdomains -d example.com --exclude mail,blog,dev,vpn
 ```
 
 ### 7. Safe Browser Launching
 Open generated queries in your default browser in controlled batches:
 
 ```bash
-df scan -d example.com -c configs,admin --open --batch-size 3 --delay 2000
+dfg scan -d example.com -c configs,admin --open --batch-size 3 --delay 2000
 ```
 
 ---

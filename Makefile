@@ -1,4 +1,5 @@
 BINARY_NAME=dorkforge
+ALIAS_NAME=dfg
 BUILD_DIR=bin
 GO=/usr/local/go/bin/go
 
@@ -9,8 +10,9 @@ all: test build
 build:
 	@mkdir -p $(BUILD_DIR)
 	$(GO) build -ldflags="-s -w" -o $(BUILD_DIR)/$(BINARY_NAME) ./cmd/dorkforge
-	@ln -sf $(BINARY_NAME) $(BUILD_DIR)/df
-	@echo "Build complete: $(BUILD_DIR)/$(BINARY_NAME) (and symlink $(BUILD_DIR)/df)"
+	@rm -f $(BUILD_DIR)/df
+	@ln -sf $(BINARY_NAME) $(BUILD_DIR)/$(ALIAS_NAME)
+	@echo "Build complete: $(BUILD_DIR)/$(BINARY_NAME) (and symlink $(BUILD_DIR)/$(ALIAS_NAME))"
 
 test:
 	$(GO) test -v -race ./...
@@ -20,4 +22,5 @@ clean:
 
 install: build
 	cp $(BUILD_DIR)/$(BINARY_NAME) $(HOME)/go/bin/$(BINARY_NAME) || sudo cp $(BUILD_DIR)/$(BINARY_NAME) /usr/local/bin/$(BINARY_NAME)
-	@echo "Installed dorkforge to PATH"
+	cp $(BUILD_DIR)/$(BINARY_NAME) $(HOME)/go/bin/$(ALIAS_NAME) || sudo cp $(BUILD_DIR)/$(BINARY_NAME) /usr/local/bin/$(ALIAS_NAME)
+	@echo "Installed dorkforge and dfg alias to PATH"
