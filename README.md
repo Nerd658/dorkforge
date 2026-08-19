@@ -137,8 +137,17 @@ dfg subdomains -d example.com --exclude mail,blog,dev,vpn
 ### 7. Safe Browser Launching
 Open generated queries in your default browser in controlled batches directly from the terminal (bypasses browser popup blockers via system calls):
 
+### 8. Optional Direct API Intelligence (Shodan & GitHub)
+Optionally provide API keys via flags or environment variables to directly resolve host IPs and code leaks without opening a browser:
+
 ```bash
-dfg scan -d example.com -c configs,admin --open --batch-size 3 --delay 2000
+# Via Environment Variables
+export SHODAN_API_KEY="your_shodan_key"
+export GITHUB_TOKEN="your_github_pat"
+dfg recon -d example.com -o audit.html
+
+# Via CLI Flags
+dfg recon -d example.com --shodan-key="your_key" --github-token="your_pat" -o audit.html
 ```
 
 ---

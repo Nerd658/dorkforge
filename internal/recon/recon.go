@@ -5,6 +5,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Nerd658/dorkforge/internal/api"
 	"github.com/Nerd658/dorkforge/internal/dorks"
 	"github.com/Nerd658/dorkforge/internal/engine"
 	"github.com/Nerd658/dorkforge/internal/fetcher"
@@ -24,6 +25,8 @@ type ReconOptions struct {
 	FetchLimit   int
 	FetchTimeout time.Duration
 	Concurrency  int
+	ShodanAPIKey string
+	GitHubToken  string
 }
 
 // DefaultReconOptions returns standard reconnaissance configuration.
@@ -35,18 +38,20 @@ func DefaultReconOptions() ReconOptions {
 	}
 }
 
-// ReconResult consolidates output from all 3 phases.
+// ReconResult consolidates output from all phases.
 type ReconResult struct {
-	Target       string                     `json:"target"`
-	StartedAt    string                     `json:"started_at"`
-	CompletedAt  string                     `json:"completed_at"`
-	DurationMs   int64                      `json:"duration_ms"`
-	Scan         *models.ScanSummary        `json:"scan"`
-	Archive      *fetcher.FetchResult       `json:"archive,omitempty"`
-	LiveResults  []LiveFinding              `json:"live_results,omitempty"`
-	ProbeResults []prober.ProbeResult       `json:"probe_results,omitempty"`
-	RiskScore    int                        `json:"risk_score"`
-	ExposedCount int                        `json:"exposed_count"`
+	Target        string                     `json:"target"`
+	StartedAt     string                     `json:"started_at"`
+	CompletedAt   string                     `json:"completed_at"`
+	DurationMs    int64                      `json:"duration_ms"`
+	Scan          *models.ScanSummary        `json:"scan"`
+	Archive       *fetcher.FetchResult       `json:"archive,omitempty"`
+	LiveResults   []LiveFinding              `json:"live_results,omitempty"`
+	ProbeResults  []prober.ProbeResult       `json:"probe_results,omitempty"`
+	ShodanMatches []api.ShodanMatch          `json:"shodan_matches,omitempty"`
+	GitHubItems   []api.GitHubCodeItem       `json:"github_items,omitempty"`
+	RiskScore     int                        `json:"risk_score"`
+	ExposedCount  int                        `json:"exposed_count"`
 }
 
 // LiveFinding stores a scraper result paired with the dork that generated it.
@@ -156,6 +161,24 @@ func RunRecon(ctx context.Context, target string, opts ReconOptions, onPhase Pha
 			}
 		}
 		callPhase("Probe", "completed")
+	}
+
+	if opts.ShodanAPIKey != "" {
+		callPhase("Shodan API", "started")
+		shodanRes, err := api.QueryShodan(ctx, opts.ShodanAPIKey, "ssl.cert.subject.CN:"+target, "")
+		if err == nil && shodanRes != nil {
+			res.ShodanMatches = shodanRes.Matches
+		}
+		callPhase("Shodan API", "completed")
+	}
+
+	if opts.GitHubToken != "" {
+		callPhase("GitHub API", "started")
+		ghRes, err := api.QueryGitHubCode(ctx, opts.GitHubToken, target+" filename:.env", "")
+		if err == nil && ghRes != nil {
+			res.GitHubItems = ghRes.Items
+		}
+		callPhase("GitHub API", "completed")
 	}
 
 	res.RiskScore = (crit * 10) + (high * 5) + (med * 2) + (low * 1) + (res.ExposedCount * 15) + (sensitiveArchiveURLs * 3)

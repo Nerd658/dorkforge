@@ -1,13 +1,23 @@
-[2026-08-19] — Document Browser Popup Blocker Authorization in README.md
+[2026-08-19] — Implement Optional Shodan and GitHub REST API Direct Intelligence Clients
 
 What changed:
-- Added browser popup blocker notice to README.md under HTML Dashboard and Browser Launching sections.
-- Documented how to authorize multi-tab opening in browser address bars for HTML reports.
-- Highlighted CLI '--open' flag as a system-level popup blocker bypass mechanism.
+- Created 'internal/api/shodan.go' implementing Shodan REST API host search client (extracts IPs, ports, hostnames, orgs, location).
+- Created 'internal/api/github.go' implementing GitHub Code Search REST API client (extracts file paths, repos, code links).
+- Created 'internal/api/api_test.go' with 100% passing mock HTTP unit test coverage.
+- Integrated optional API execution into 'internal/recon/recon.go' and added 'API Intelligence' tab rendering in 'internal/recon/export.go'.
+- Added '--shodan-key' and '--github-token' CLI flags and environment variable support ('SHODAN_API_KEY', 'GITHUB_TOKEN') in 'cmd/dorkforge/main.go'.
+- Updated 'README.md' and shell completions.
 
 Why:
-- Inform users and security auditors on how to handle browser pop-up restrictions when utilizing multi-tab launch buttons in exported reports.
+- Allow auditors with Shodan or GitHub API credentials to directly resolve IP targets and code leaks inside terminal output and HTML reports without manual browser interaction, while keeping the tool 100% functional without keys.
 
 Files affected:
-- README.md — Added pop-up blocker usage note
+- internal/api/shodan.go — Shodan REST API client
+- internal/api/github.go — GitHub Code Search REST API client
+- internal/api/api_test.go — Unit test suite for API clients
+- internal/recon/recon.go — Integrated API query execution into Recon pipeline
+- internal/recon/export.go — Added API Intelligence tab rendering in HTML dashboard
+- cmd/dorkforge/main.go — Added --shodan-key and --github-token flags and env var resolution
+- internal/completion/completion.go — Updated autocompletion scripts
+- README.md — Added API Intelligence documentation
 - commit.txt — Updated release notes

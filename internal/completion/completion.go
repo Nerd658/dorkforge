@@ -196,7 +196,7 @@ _dorkforge() {
                     ;;
             esac
             if [[ "$cur" == -* ]]; then
-                COMPREPLY=( $(compgen -W "-d --domain -l --list -c --category -s --min-severity -e --engine -o --output -f --format --no-fetch --no-live --no-probe --fetch-limit --fetch-timeout -t --concurrency --no-color -h --help" -- "$cur") )
+                COMPREPLY=( $(compgen -W "-d --domain -l --list -c --category -s --min-severity -e --engine -o --output -f --format --no-fetch --no-live --no-probe --fetch-limit --fetch-timeout -t --concurrency --shodan-key --github-token --no-color -h --help" -- "$cur") )
             fi
             ;;
         subdomains)

@@ -1001,6 +1001,8 @@ func handleRecon(args []string) {
 		openBrowser     bool
 		batchSize       int
 		delayMs         int
+		shodanKey       string
+		githubToken     string
 		noColor         bool
 	)
 
@@ -1028,6 +1030,8 @@ func handleRecon(args []string) {
 	fs.BoolVar(&openBrowser, "open", false, "Open generated search queries in default web browser")
 	fs.IntVar(&batchSize, "batch-size", 5, "Number of search tabs to open per batch")
 	fs.IntVar(&delayMs, "delay", 2000, "Delay in milliseconds between browser batches")
+	fs.StringVar(&shodanKey, "shodan-key", "", "Optional Shodan API key for direct host IP resolution")
+	fs.StringVar(&githubToken, "github-token", "", "Optional GitHub Personal Access Token for code search")
 	fs.BoolVar(&noColor, "no-color", false, "Disable colorized terminal output")
 
 	fs.Usage = func() {
@@ -1063,6 +1067,10 @@ func handleRecon(args []string) {
 		fmt.Printf("  %s--fetch-timeout%s %s<sec>%s         Archive query timeout [default: 15]\n", green, reset, cyan, reset)
 		fmt.Printf("  %s-t, --concurrency%s %s<int>%s       Probe worker count [default: 15]\n\n", green, reset, cyan, reset)
 
+		fmt.Printf("%s%sAPI INTELLIGENCE OPTIONS (OPTIONAL)%s\n", bold, yellow, reset)
+		fmt.Printf("  %s--shodan-key%s %s<string>%s         Shodan API key (or set SHODAN_API_KEY env var)\n", green, reset, cyan, reset)
+		fmt.Printf("  %s--github-token%s %s<string>%s       GitHub Personal Access Token (or set GITHUB_TOKEN env var)\n\n", green, reset, cyan, reset)
+
 		fmt.Printf("%s%sEXPORT & REPORT OPTIONS%s\n", bold, yellow, reset)
 		fmt.Printf("  %s-o, --output%s %s<file>%s           Output report destination path\n", green, reset, cyan, reset)
 		fmt.Printf("  %s-f, --format%s %s<fmt>%s            Export format: html, markdown, json [default: html]\n", green, reset, cyan, reset)
@@ -1092,6 +1100,13 @@ func handleRecon(args []string) {
 		minSev = parsedSev
 	}
 
+	if shodanKey == "" {
+		shodanKey = os.Getenv("SHODAN_API_KEY")
+	}
+	if githubToken == "" {
+		githubToken = os.Getenv("GITHUB_TOKEN")
+	}
+
 	reconOpts := recon.ReconOptions{
 		SkipFetch:    noFetch,
 		SkipLive:     noLive,
@@ -1102,6 +1117,8 @@ func handleRecon(args []string) {
 		FetchLimit:   fetchLimit,
 		FetchTimeout: time.Duration(fetchTimeout) * time.Second,
 		Concurrency:  concurrency,
+		ShodanAPIKey: shodanKey,
+		GitHubToken:  githubToken,
 	}
 
 	var targets []string

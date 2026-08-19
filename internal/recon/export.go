@@ -344,7 +344,12 @@ func ExportReconHTML(result *ReconResult) []byte {
 	<div class="tab active" onclick="switchTab(event, 'overview')">Overview</div>
 	<div class="tab" onclick="switchTab(event, 'dorks')">Dork Signatures</div>
 	<div class="tab" onclick="switchTab(event, 'live')">Live Findings</div>
-	<div class="tab" onclick="switchTab(event, 'probes')">Probe Results</div>
+	<div class="tab" onclick="switchTab(event, 'probes')">Probe Results</div>` + func() string {
+		if len(result.ShodanMatches) > 0 || len(result.GitHubItems) > 0 {
+			return `<div class="tab" onclick="switchTab(event, 'api-results')">API Intelligence</div>`
+		}
+		return ""
+	}() + `
 </div>
 
 <div id="overview" class="tab-content active">
@@ -494,8 +499,37 @@ func ExportReconHTML(result *ReconResult) []byte {
 	sb.WriteString(`
 		</tbody>
 	</table>
-</div>
+</div>`)
 
+	if len(result.ShodanMatches) > 0 || len(result.GitHubItems) > 0 {
+		sb.WriteString(`
+<div id="api-results" class="tab-content">`)
+		if len(result.ShodanMatches) > 0 {
+			sb.WriteString(fmt.Sprintf(`<h3>Shodan Direct Host Matches (%d)</h3>`, len(result.ShodanMatches)))
+			sb.WriteString(`<table><thead><tr><th>IP Address</th><th>Port</th><th>Hostnames</th><th>Organization</th><th>Country</th></tr></thead><tbody>`)
+			for _, m := range result.ShodanMatches {
+				hosts := strings.Join(m.Hostnames, ", ")
+				if hosts == "" {
+					hosts = "-"
+				}
+				sb.WriteString(fmt.Sprintf(`<tr><td><code>%s</code></td><td><code>%d</code></td><td>%s</td><td>%s</td><td>%s</td></tr>`,
+					html.EscapeString(m.IPStr), m.Port, html.EscapeString(hosts), html.EscapeString(m.Org), html.EscapeString(m.Location.CountryCode)))
+			}
+			sb.WriteString(`</tbody></table><br>`)
+		}
+		if len(result.GitHubItems) > 0 {
+			sb.WriteString(fmt.Sprintf(`<h3>GitHub Code Leaks (%d)</h3>`, len(result.GitHubItems)))
+			sb.WriteString(`<table><thead><tr><th>File Path</th><th>Repository</th><th>Action</th></tr></thead><tbody>`)
+			for _, g := range result.GitHubItems {
+				sb.WriteString(fmt.Sprintf(`<tr><td><code>%s</code></td><td>%s</td><td><a href="%s" target="_blank" class="btn">View Code</a></td></tr>`,
+					html.EscapeString(g.Path), html.EscapeString(g.Repository.FullName), html.EscapeString(g.HTMLURL)))
+			}
+			sb.WriteString(`</tbody></table>`)
+		}
+		sb.WriteString(`</div>`)
+	}
+
+	sb.WriteString(`
 <script>
 function switchTab(evt, tabId) {
 	document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
