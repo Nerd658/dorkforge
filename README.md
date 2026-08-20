@@ -201,6 +201,14 @@ dfg scan -d 198.51.100.0/24 -e shodan
 dfg scan -d AS15169 -e shodan
 ```
 
+### 13. WAF Origin Server Discovery (`dfg origin`)
+Discover real WAF / Cloudflare Origin Server IPs using passive Certificate Transparency logs (crt.sh), historical DNS records, direct TLS handshakes, and weighted confidence scoring:
+
+```bash
+# Discover Origin Server IPs bypassing Cloudflare
+dfg origin -d example.com -o origin_report.html
+```
+
 ---
 
 ## Project Structure
@@ -211,6 +219,12 @@ dorkforge/
 │   └── dorkforge/
 │       └── main.go                  # CLI Entrypoint, completion & flag routing
 ├── internal/
+│   ├── origin/
+│   │   ├── origin.go                # WAF Origin Discovery pipeline orchestrator
+│   │   ├── crtsh.go                 # Passive Certificate Transparency miner (crt.sh)
+│   │   ├── historical.go            # Passive AlienVault OTX & historical IP harvester
+│   │   ├── cdn.go                   # CDN / Cloudflare IP subnet classifier
+│   │   └── verifier.go              # Direct TLS & HTTP Host verification engine
 │   ├── api/
 │   │   ├── google.go                # Google CSE REST API client
 │   │   ├── shodan.go                # Shodan REST API client

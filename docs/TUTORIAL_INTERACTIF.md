@@ -670,6 +670,27 @@ Red teams and auditors frequently target entire IP ranges (CIDR blocks) or Auton
 
 ---
 
+## Lab 11: WAF Origin Server Discovery via Certificate Intelligence (`dfg origin`)
+
+### Context & Threat Scenario
+Modern web applications sit behind Reverse Proxies & WAFs (such as Cloudflare, Fastly, Akamai) that mask the backend Origin Server IP address. However, historical DNS records and Certificate Transparency (CT) logs frequently expose the real Origin Server IP where TLS handshakes present matching Subject Common Names (CN).
+
+### Multi-Stage Correlation Chain
+```text
+Domain -> Passive CT Logs (crt.sh) -> Historical DNS IPs -> Direct TLS Handshake -> HTTP Host Verification -> Confidence Rating
+```
+
+### Terminal Commands
+```bash
+# Execute WAF Origin Server discovery
+./bin/dorkforge origin -d example.com -o origin_report.html
+
+# Include Origin Bypass discovery in full automated reconnaissance pipeline
+./bin/dorkforge recon -d example.com -o full_audit.html
+```
+
+---
+
 # Module 4: Defensive Remediation Playbooks
 
 Identifying exposures is only half the battle. A security engineer must provide clear, actionable configuration fixes.
