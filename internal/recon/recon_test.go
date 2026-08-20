@@ -24,6 +24,7 @@ func TestRunReconFast(t *testing.T) {
 		SkipFetch:   true,
 		SkipLive:    true,
 		SkipProbe:   true,
+		SkipOrigin:  true,
 		Categories:  []models.Category{models.CategoryConfigs},
 		MinSeverity: models.SeverityHigh,
 	}

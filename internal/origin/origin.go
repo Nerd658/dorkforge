@@ -88,9 +88,9 @@ func RunOriginDiscovery(ctx context.Context, rawTarget string, opts OriginOption
 
 	for _, item := range candidatesToTest {
 		wg.Add(1)
+		sem <- struct{}{}
 		go func(ipStr, assocHost string) {
 			defer wg.Done()
-			sem <- struct{}{}
 			defer func() { <-sem }()
 
 			res443 := VerifyOriginCandidate(ctx, ipStr, 443, target, assocHost)
