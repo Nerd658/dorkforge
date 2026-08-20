@@ -84,7 +84,7 @@ _dorkforge() {
         cword=$COMP_CWORD
     fi
 
-    local commands="scan fetch probe recon subdomains list categories completion version help"
+    local commands="scan fetch probe recon origin subdomains list categories completion version help"
     local categories="configs secrets admin backups cloud source-code errors docs api-endpoints subdomains network-iot employees-osint all"
     local severities="low medium high critical"
     local engines="google github duckduckgo bing shodan all"

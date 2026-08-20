@@ -11,6 +11,7 @@ import (
 	"github.com/Nerd658/dorkforge/internal/fetcher"
 	"github.com/Nerd658/dorkforge/internal/ignore"
 	"github.com/Nerd658/dorkforge/internal/models"
+	"github.com/Nerd658/dorkforge/internal/origin"
 	"github.com/Nerd658/dorkforge/internal/prober"
 	"github.com/Nerd658/dorkforge/internal/scraper"
 )
@@ -20,6 +21,7 @@ type ReconOptions struct {
 	SkipFetch    bool
 	SkipLive     bool
 	SkipProbe    bool
+	SkipOrigin   bool
 	Categories   []models.Category
 	MinSeverity  models.Severity
 	Engines      []models.Engine
@@ -36,8 +38,11 @@ type ReconOptions struct {
 // DefaultReconOptions returns standard reconnaissance configuration.
 func DefaultReconOptions() ReconOptions {
 	return ReconOptions{
-		FetchLimit:   100,
-		FetchTimeout: 30 * time.Second,
+		Categories:   nil,
+		MinSeverity:  models.SeverityLow,
+		Engines:      nil,
+		FetchLimit:   200,
+		FetchTimeout: 15 * time.Second,
 		Concurrency:  5,
 	}
 }
@@ -55,6 +60,7 @@ type ReconResult struct {
 	ShodanMatches []api.ShodanMatch          `json:"shodan_matches,omitempty"`
 	GitHubItems   []api.GitHubCodeItem       `json:"github_items,omitempty"`
 	GoogleItems   []api.GoogleCSESnippetItem `json:"google_items,omitempty"`
+	OriginReport  *origin.OriginReport       `json:"origin_report,omitempty"`
 	RiskScore     int                        `json:"risk_score"`
 	ExposedCount  int                        `json:"exposed_count"`
 }
@@ -198,7 +204,20 @@ func RunRecon(ctx context.Context, target string, opts ReconOptions, onPhase Pha
 		callPhase("Google API", "completed")
 	}
 
-	res.RiskScore = (crit * 10) + (high * 5) + (med * 2) + (low * 1) + (res.ExposedCount * 15) + (sensitiveArchiveURLs * 3)
+	originBypassBonus := 0
+	if !opts.SkipOrigin {
+		callPhase("Origin Bypass Engine", "started")
+		oOpts := origin.DefaultOriginOptions()
+		oOpts.Concurrency = opts.Concurrency
+		oRes, err := origin.RunOriginDiscovery(ctx, target, oOpts)
+		if err == nil && oRes != nil {
+			res.OriginReport = oRes
+			originBypassBonus = oRes.OriginBypassCount * 25
+		}
+		callPhase("Origin Bypass Engine", "completed")
+	}
+
+	res.RiskScore = (crit * 10) + (high * 5) + (med * 2) + (low * 1) + (res.ExposedCount * 15) + (sensitiveArchiveURLs * 3) + originBypassBonus
 	if res.RiskScore > 100 {
 		res.RiskScore = 100
 	}

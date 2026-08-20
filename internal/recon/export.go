@@ -344,7 +344,8 @@ func ExportReconHTML(result *ReconResult) []byte {
 	<div class="tab active" onclick="switchTab(event, 'overview')">Overview</div>
 	<div class="tab" onclick="switchTab(event, 'dorks')">Dork Signatures</div>
 	<div class="tab" onclick="switchTab(event, 'live')">Live Findings</div>
-	<div class="tab" onclick="switchTab(event, 'probes')">Probe Results</div>` + func() string {
+	<div class="tab" onclick="switchTab(event, 'probes')">Probe Results</div>
+	<div class="tab" onclick="switchTab(event, 'origin-results')">Origin Bypass</div>` + func() string {
 		if len(result.ShodanMatches) > 0 || len(result.GitHubItems) > 0 || len(result.GoogleItems) > 0 {
 			return `<div class="tab" onclick="switchTab(event, 'api-results')">API Intelligence</div>`
 		}
@@ -536,6 +537,46 @@ func ExportReconHTML(result *ReconResult) []byte {
 			sb.WriteString(`</tbody></table>`)
 		}
 		sb.WriteString(`</div>`)
+	}
+
+	if result.OriginReport != nil {
+		sb.WriteString(`
+<div id="origin-results" class="tab-content">
+	<h3>Certificate Intelligence & Origin Server Discovery</h3>
+	<table>
+		<thead>
+			<tr>
+				<th>Candidate IP</th>
+				<th>CDN Status</th>
+				<th>Associated Host</th>
+				<th>Cert Common Name</th>
+				<th>HTTP Title</th>
+				<th>Confidence Rating</th>
+				<th>Bypass Status</th>
+			</tr>
+		</thead>
+		<tbody>`)
+		for _, cand := range result.OriginReport.Candidates {
+			cdnStr := "Direct IP"
+			if cand.IsCDN {
+				cdnStr = fmt.Sprintf("CDN (%s)", cand.CDNProvider)
+			}
+			badgeClass := "badge-low"
+			if cand.IsOriginBypass {
+				badgeClass = "badge-critical"
+			} else if cand.ConfidenceLevel == "HIGH" || cand.ConfidenceLevel == "MEDIUM" {
+				badgeClass = "badge-medium"
+			}
+			sb.WriteString(fmt.Sprintf(`<tr><td><code>%s:%d</code></td><td>%s</td><td>%s</td><td><code>%s</code></td><td>%s</td><td><span class="badge %s">%s (%d%%)</span></td><td>%s</td></tr>`,
+				html.EscapeString(cand.IP), cand.Port, html.EscapeString(cdnStr), html.EscapeString(cand.AssociatedHost), html.EscapeString(cand.CertCN), html.EscapeString(cand.HTTPTitle), badgeClass, cand.ConfidenceLevel, cand.ConfidenceScore,
+				func() string {
+					if cand.IsOriginBypass {
+						return `<span class="badge badge-critical">ORIGIN CONFIRMED</span>`
+					}
+					return `<span class="badge badge-low">CDN Protected</span>`
+				}()))
+		}
+		sb.WriteString(`</tbody></table></div>`)
 	}
 
 	sb.WriteString(`

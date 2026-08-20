@@ -18,6 +18,7 @@ import (
 	"github.com/Nerd658/dorkforge/internal/fetcher"
 	"github.com/Nerd658/dorkforge/internal/ignore"
 	"github.com/Nerd658/dorkforge/internal/models"
+	"github.com/Nerd658/dorkforge/internal/origin"
 	"github.com/Nerd658/dorkforge/internal/output"
 	"github.com/Nerd658/dorkforge/internal/prober"
 	"github.com/Nerd658/dorkforge/internal/recon"
@@ -26,7 +27,7 @@ import (
 )
 
 const (
-	Version   = "1.0.0"
+	Version   = "1.2.0"
 	AppBanner = `
      _            _     __                     
   __| | ___  _ __| | __/ _| ___  _ __ __ _  ___ 
@@ -81,19 +82,14 @@ func printUsage() {
 	fmt.Printf("  %s%-14s%s %sExecute passive dorking reconnaissance on single or multiple targets%s\n", green, "scan", reset, dim, reset)
 	fmt.Printf("  %s%-14s%s %sExtract historical URLs from Wayback Machine CDX & AlienVault OTX%s\n", green, "fetch", reset, dim, reset)
 	fmt.Printf("  %s%-14s%s %sActively probe high-value exposed endpoints (HTTP status verification)%s\n", green, "probe", reset, dim, reset)
-	fmt.Printf("  %s%-14s%s %sFull automated reconnaissance pipeline (scan + fetch + live + probe)%s\n", green, "recon", reset, dim, reset)
+	fmt.Printf("  %s%-14s%s %sFull automated reconnaissance pipeline (scan + fetch + live + probe + origin)%s\n", green, "recon", reset, dim, reset)
+	fmt.Printf("  %s%-14s%s %sDiscover real WAF Origin Server IPs via Certificate Intelligence & Passive CT%s\n", green, "origin", reset, dim, reset)
 	fmt.Printf("  %s%-14s%s %sGenerate negative exclusion search chains for subdomain discovery%s\n", green, "subdomains", reset, dim, reset)
 	fmt.Printf("  %s%-14s%s %sInspect built-in signatures catalog with category and keyword filters%s\n", green, "list", reset, dim, reset)
 	fmt.Printf("  %s%-14s%s %sList all 12 audit categories, risk severities, and descriptions%s\n", green, "categories", reset, dim, reset)
 	fmt.Printf("  %s%-14s%s %sGenerate shell autocompletion scripts (bash, zsh, fish)%s\n", green, "completion", reset, dim, reset)
 	fmt.Printf("  %s%-14s%s %sDisplay version and build information%s\n", green, "version", reset, dim, reset)
 
-	fmt.Printf("\n%s%sSUPPORTED SEARCH ENGINES (-e, --engine)%s\n", bold, yellow, reset)
-	fmt.Printf("  %s%-12s%s Google Search (GHDB operators: site, inurl, intitle, ext, filetype)\n", cyan, "google", reset)
-	fmt.Printf("  %s%-12s%s GitHub Code Search (API tokens, repo secrets, commit disclosures)\n", cyan, "github", reset)
-	fmt.Printf("  %s%-12s%s DuckDuckGo (Non-personalized index & unranked parameter listings)\n", cyan, "duckduckgo", reset)
-	fmt.Printf("  %s%-12s%s Bing (Subdomain discovery, IP hosting, unlinked document indexing)\n", cyan, "bing", reset)
-	fmt.Printf("  %s%-12s%s Shodan (Internet-facing host fingerprints & SSL certificate SANs)\n", cyan, "shodan", reset)
 
 	fmt.Printf("\n%s%sSUPPORTED EXPORT FORMATS (-f, --format)%s\n", bold, yellow, reset)
 	fmt.Printf("  %s%-12s%s Formatted Markdown audit deliverable with remediation tables (default)\n", magenta, "markdown", reset)
@@ -141,6 +137,8 @@ func main() {
 		handleProbe(os.Args[2:])
 	case "recon":
 		handleRecon(os.Args[2:])
+	case "origin":
+		handleOrigin(os.Args[2:])
 	case "subdomains":
 		handleSubdomains(os.Args[2:])
 	case "list":
@@ -1266,4 +1264,109 @@ func handleRecon(args []string) {
 			}
 		}
 	}
+}
+
+func handleOrigin(args []string) {
+	fs := flag.NewFlagSet("origin", flag.ExitOnError)
+	var (
+		domainFlag  string
+		outputFlag  string
+		formatFlag  string
+		concurrency int
+		noColor     bool
+	)
+
+	fs.StringVar(&domainFlag, "d", "", "Target domain (e.g. example.com)")
+	fs.StringVar(&domainFlag, "domain", "", "Target domain (e.g. example.com)")
+	fs.StringVar(&outputFlag, "o", "", "Output report destination path")
+	fs.StringVar(&outputFlag, "output", "", "Output report destination path")
+	fs.StringVar(&formatFlag, "f", "html", "Export format: html, markdown, json")
+	fs.StringVar(&formatFlag, "format", "html", "Export format: html, markdown, json")
+	fs.IntVar(&concurrency, "t", 10, "Worker pool concurrency count")
+	fs.IntVar(&concurrency, "concurrency", 10, "Worker pool concurrency count")
+	fs.BoolVar(&noColor, "no-color", false, "Disable colorized terminal output")
+
+	fs.Usage = func() {
+		noCol := output.ShouldDisableColor()
+		yellow, green, cyan, bold, dim, reset := "", "", "", "", "", ""
+		if !noCol && !noColor {
+			yellow = "\033[1;33m"
+			green = "\033[1;32m"
+			cyan = "\033[1;36m"
+			bold = "\033[1m"
+			dim = "\033[2m"
+			reset = "\033[0m"
+		}
+
+		fmt.Printf("%s%sORIGIN COMMAND USAGE (WAF Bypass & Certificate Intelligence)%s\n", bold, yellow, reset)
+		fmt.Printf("  dorkforge origin -d <domain> [flags]\n\n")
+
+		fmt.Printf("%s%sTARGET OPTIONS%s\n", bold, yellow, reset)
+		fmt.Printf("  %s-d, --domain%s %s<string>%s         Target domain (e.g. example.com)\n\n", green, reset, cyan, reset)
+
+		fmt.Printf("%s%sEXPORT & REPORT OPTIONS%s\n", bold, yellow, reset)
+		fmt.Printf("  %s-o, --output%s %s<file>%s           Output report destination path\n", green, reset, cyan, reset)
+		fmt.Printf("  %s-f, --format%s %s<fmt>%s            Export format: html, markdown, json [default: html]\n", green, reset, cyan, reset)
+		fmt.Printf("  %s-t, --concurrency%s %s<int>%s       Worker pool concurrency count [default: 10]\n", green, reset, cyan, reset)
+		fmt.Printf("  %s--no-color%s                       Disable colorized terminal output\n\n", green, reset)
+		fmt.Printf("%s%s%s\n", dim, "Run 'dorkforge -h' for global options.", reset)
+	}
+
+	_ = fs.Parse(args)
+
+	if domainFlag == "" {
+		fmt.Fprintf(os.Stderr, "Error: must specify a target domain with -d <domain>\n\n")
+		fs.Usage()
+		os.Exit(1)
+	}
+
+	if output.ShouldDisableColor() {
+		noColor = true
+	}
+
+	green, yellow, red, cyan, bold, dim, r := "", "", "", "", "", "", ""
+	if !noColor {
+		green = "\033[1;32m"
+		yellow = "\033[1;33m"
+		red = "\033[1;31m"
+		cyan = "\033[1;36m"
+		bold = "\033[1m"
+		dim = "\033[2m"
+		r = "\033[0m"
+	}
+
+	fmt.Printf("%s[*] Running Certificate Intelligence & Origin Bypass Engine on %s%s%s...\n", bold, cyan, domainFlag, r)
+	ctx := context.Background()
+	opts := origin.DefaultOriginOptions()
+	opts.Concurrency = concurrency
+
+	report, err := origin.RunOriginDiscovery(ctx, domainFlag, opts)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error executing origin discovery: %v\n", err)
+		os.Exit(1)
+	}
+
+	fmt.Printf("\n%s=== ORIGIN DISCOVERY REPORT ===%s\n", bold, r)
+	fmt.Printf("  Target              : %s%s%s\n", cyan, report.Target, r)
+	fmt.Printf("  Public DNS IPs      : %s%v%s\n", yellow, report.CurrentPublicIPs, r)
+	if report.CDNEdgeDetected {
+		fmt.Printf("  CDN Edge Detected   : %sYES (%s)%s\n", red, report.CDNProvider, r)
+	} else {
+		fmt.Printf("  CDN Edge Detected   : %sNO%s\n", green, r)
+	}
+	fmt.Printf("  Subdomains Mined    : %s%d%s\n", green, len(report.SubdomainsDiscovered), r)
+	fmt.Printf("  Candidates Tested   : %s%d%s\n", green, report.CandidatesTested, r)
+	if report.OriginBypassCount > 0 {
+		fmt.Printf("  %sORIGIN BYPASS FOUND : %d CANDIDATES CONFIRMED%s\n\n", red, report.OriginBypassCount, r)
+	} else {
+		fmt.Printf("  Origin Bypass Found : %s0 candidates%s\n\n", dim, r)
+	}
+
+	for _, cand := range report.Candidates {
+		if cand.IsOriginBypass {
+			fmt.Printf("  %s[ORIGIN BYPASS CONFIRMED]%s IP: %s%s%s:%d | Host: %s | Cert CN: %s | Title: %q | Confidence: %s%s%s (%d%%)\n",
+				red, r, green, cand.IP, r, cand.Port, cand.AssociatedHost, cand.CertCN, cand.HTTPTitle, bold, cand.ConfidenceLevel, r, cand.ConfidenceScore)
+		}
+	}
+	fmt.Println()
 }
